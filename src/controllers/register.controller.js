@@ -19,7 +19,6 @@ const {
 const { token } = require("morgan");
 const bcrypt = require("bcryptjs");
 
-
 const register = {
   validation: {
     body: Joi.object().keys({
@@ -37,66 +36,115 @@ const register = {
     try {
       const existingUser = await Register.findOne({ email: req.body.email });
       if (existingUser) {
-        return res.status(httpStatus.BAD_REQUEST).send({ message: "User already registered" });
+        return res
+          .status(httpStatus.BAD_REQUEST)
+          .send({ message: "User already registered" });
       }
 
       // Hash password before saving
-      req.body.password = await bcrypt.hash(req.body.password, 10);
+      // req.body.password = await bcrypt.hash(req.body.password, 10);
 
-      // const newUser = await new Register(req.body).save();
-      
-      // // Ensure token generation is working
+      const newUser = await new Register(req.body).save();
+
+      // Ensure token generation is working
+      const token = await tokenService.generateAuthTokens(newUser);
+      if (!token) {
+        throw new Error("Token generation failed");
+      }
+
+      //       const newUser = await new Register(req.body).save();
+
+      // console.log("New User Created:", newUser); // Debugging log
+
       // const token = await tokenService.generateAuthTokens(newUser);
       // if (!token) {
       //   throw new Error("Token generation failed");
       // }
 
-
-      const newUser = await new Register(req.body).save();
-
-console.log("New User Created:", newUser); // Debugging log
-
-const token = await tokenService.generateAuthTokens(newUser);
-if (!token) {
-  throw new Error("Token generation failed");
-}
-
-
       return res.status(httpStatus.CREATED).send({ token, user: newUser });
     } catch (error) {
       console.error("Register Error:", error);
-      return res.status(httpStatus.INTERNAL_SERVER_ERROR).send({ message: error.message });
+      return res
+        .status(httpStatus.INTERNAL_SERVER_ERROR)
+        .send({ message: error.message });
     }
   },
 };
 
-  
-  const login = {
-    validation: {
-      body: Joi.object().keys({
-        email: Joi.string().required().email(),
-        password: Joi.string().required(),
+// const login = {
+//   validation: {
+//     body: Joi.object().keys({
+//       email: Joi.string().required().email(),
+//       password: Joi.string().required(),
+//     }),
+//   },
+//   handler: async (req, res) => {
+//     const { email, password } = req.body;
+
+//     const user = await Register.findOne({ email });
+//     console.log(user); 
+
+//     const isMatch = await user.isPasswordMatch(password);
+// console.log("Password match:", isMatch); // This should be true
+
+
+//     // if (!user || !(await user.isPasswordMatch(password))) {
+//     //   throw new ApiError(
+//     //     httpStatus.UNAUTHORIZED,
+//     //     "Incorrect email or password"
+//     //   );
+//     // }
+
+//     const token = await tokenService.generateAuthTokens(user);
+//     return res.status(httpStatus.OK).send({ token, user });
+//   },
+// };
+
+const login = {
+  validation: {
+    body: Joi.object().keys({
+      email: Joi.string().required().email().messages({
+        "string.email": "Please enter a valid email address",
+        "any.required": "Email is required",
       }),
-    },
-    handler: async (req, res) => {
-      const { email, password } = req.body;
-  
-      const user = await Register.findOne({ email });
-      if (!user) {
-        return res.status(httpStatus.UNAUTHORIZED).send({ message: "Incorrect email or password" });
-      }
-  
-      // 🔥 Compare hashed password 🔥
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(httpStatus.UNAUTHORIZED).send({ message: "Incorrect email or password" });
-      }
-  
-      const token = await tokenService.generateAuthTokens(user);
-      return res.status(httpStatus.OK).send({ token, user });
-    },
-  };
-  
+      password: Joi.string().required().min(8).messages({
+        "string.min": "Password must be at least 8 characters long",
+        "any.required": "Password is required",
+      }),
+    }),
+  },
+  handler: async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // Find user by email
+        const user = await Register.findOne({ email });
+        console.log("User from DB:", user); // Debugging log
+
+        if (!user) {
+            return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid email or password" });
+        }
+
+        // Check password match
+        const isMatch = await user.isPasswordMatch(password);
+        console.log("Password match:", isMatch); // Debugging log
+
+        if (!isMatch) {
+            return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid email or password" });
+        }
+
+        // Generate token
+        const token = await tokenService.generateAuthTokens(user);
+        return res.status(httpStatus.OK).json({ token, user });
+
+    } catch (error) {
+        console.error("Login Error:", error);
+        return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
+    }
+}
+
+};
+
 
 const logout = catchAsync(async (req, res) => {
   await authService.logout(req.body.refreshToken);
@@ -190,13 +238,11 @@ const verifyOTP = {
           { new: true, upsert: true }
         );
 
-        return res
-          .status(httpStatus.OK)
-          .send({
-            success: true,
-            message: "OTP verification successful!",
-            newAdmin,
-          });
+        return res.status(httpStatus.OK).send({
+          success: true,
+          message: "OTP verification successful!",
+          newAdmin,
+        });
       } else {
         return res
           .status(httpStatus.BAD_REQUEST)

@@ -7,11 +7,6 @@ const { roles } = require('../config/roles');
 const registerSchema = mongoose.Schema(
   {
 
-    _id: {
-      type: mongoose.Schema.Types.ObjectId,
-      auto: true, // Ensure MongoDB assigns an _id
-    },
-
     name: {
       type: String,
       required: true,
@@ -60,10 +55,10 @@ const registerSchema = mongoose.Schema(
   }
 );
 
+registerSchema.set("toJSON", { virtuals: true });
 registerSchema.plugin(toJSON);
 
 
-registerSchema.plugin(toJSON);
 registerSchema.plugin(paginate);
 
 /**
@@ -97,10 +92,13 @@ registerSchema.methods.isPasswordMatch = async function (password) {
 // });
 
 registerSchema.pre('save', async function (next) {
-    if (this.isModified('password')) {
-        this.password = await bcrypt.hash(this.password, 8); // Use 10 rounds for security
-    }
-    next();
+  if (this.isModified('password')) {
+      // Only hash if it is not already hashed
+      if (!this.password.startsWith("$2a$")) { // Check if password is already hashed
+          this.password = await bcrypt.hash(this.password, 10);
+      }
+  }
+  next();
 });
 
 
