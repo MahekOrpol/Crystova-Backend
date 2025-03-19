@@ -1477,7 +1477,7 @@ browserslist@^4.21.9, "browserslist@>= 4.21.0":
   resolved "https://registry.npmjs.org/browserslist/-/browserslist-4.21.11.tgz"
   integrity sha512-xn1UXOKUz7DjdGlg9RrUr0GGiWzI97UQJnugHtH0OLDfJB7jMgoIkYvRIEO1l9EeEERVqeqLYOcFBW9ldjypbQ==
   dependencies:
-    caniuse-lite "^1.0.30001538"
+    caniuse-lite "^1.0.80001538"
     electron-to-chromium "^1.4.526"
     node-releases "^2.0.13"
     update-browserslist-db "^1.0.13"
@@ -1577,9 +1577,9 @@ camelcase@^6.0.0:
   resolved "https://registry.npmjs.org/camelcase/-/camelcase-6.3.0.tgz"
   integrity sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==
 
-caniuse-lite@^1.0.30001538:
-  version "1.0.30001538"
-  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001538.tgz"
+caniuse-lite@^1.0.80001538:
+  version "1.0.80001538"
+  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.80001538.tgz"
   integrity sha512-HWJnhnID+0YMtGlzcp3T9drmBJUVDchPJ08tpUGFLs9CYlwWPH2uLgpHn8fND5pCgXVtnGS3H4QR9XLMHVNkHw==
 
 capture-exit@^2.0.0:

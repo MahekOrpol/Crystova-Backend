@@ -15,5 +15,8 @@ module.exports.Task=require('./task.model');
 module.exports.DiscussionRoom=require('./discussionRoom.model');
 module.exports.DiscussionChat=require('./discussionChat.model');
 module.exports.Register=require('./register.modal')
+module.exports.Products=require('./products.modal')
+module.exports.Wishlist=require('./wishlist.modal')
+module.exports.Cart=require('./cart.modal')
 
 

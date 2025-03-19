@@ -16,6 +16,8 @@ const taskRoute = require("./task.route");
 const discussionRoomRoute = require("./discussionRoom.route");
 const discussionChatRoute = require("./discussionChat.route");
 const registerRoute = require("./register.route");
+const productRoute=require('./products.route')
+const wishlistRoute=require('./wishlist.route')
 
 const router = express.Router();
 
@@ -87,6 +89,14 @@ const defaultRoutes = [
   {
     path: "/register",
     route: registerRoute,
+  },
+  {
+    path: '/product',
+    route: productRoute,
+  },
+  {
+    path: '/wishlist',
+    route: wishlistRoute,
   },
 ];
 

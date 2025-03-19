@@ -7,7 +7,7 @@ const catchAsync = require('../../utils/catchAsync');
 
 const router = express.Router();
 
-router.post('/register', validate(adminController.register.validation), catchAsync(adminController.register.handler));
-router.post('/login', validate(adminController.login.validation), catchAsync(adminController.login.handler));
+router.post('/register', validate(adminController.registerAdmin.validation), catchAsync(adminController.registerAdmin.handler));
+router.post('/login', validate(adminController.loginAdmin.validation), catchAsync(adminController.loginAdmin.handler));
 
 module.exports = router;
