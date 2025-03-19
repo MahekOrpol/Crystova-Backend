@@ -158,6 +158,16 @@ const getTrendingProducts = {
   },
   handler: async (req, res) => {
     try {
+      // const products = await Products.aggregate([
+      //   {
+      //     $addFields: {
+      //       numericRating: { $toDouble: "$rating" } // Convert string rating to number
+      //     }
+      //   },
+      //   { $sort: { numericRating: -1 } },
+      //   { $limit: 4 }
+      // ]);
+      
       const products = await Products.find()
         .sort({ rating: -1 }) // Sort by highest rating
         .limit(4); // Get only the top 4 products
