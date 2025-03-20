@@ -126,7 +126,7 @@ const login = {
         }
 
         // Check password match
-        const isMatch = await user.isPasswordMatch(password);
+        const isMatch = await Register.isPasswordMatch(password);
         console.log("Password match:", isMatch); // Debugging log
 
         if (!isMatch) {
@@ -144,6 +144,15 @@ const login = {
 }
 
 };
+
+const getAllUser = {
+  handler: async (req, res) => {
+    const user = await Register.find()
+    // console.log('user', user)
+    return res.status(httpStatus.OK).send(user);
+
+  }
+}
 
 
 const logout = catchAsync(async (req, res) => {
@@ -296,4 +305,5 @@ module.exports = {
   sendOtp,
   verifyOTP,
   forgotPassword,
+  getAllUser
 };
