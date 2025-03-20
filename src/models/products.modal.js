@@ -78,6 +78,9 @@ const productsSchema = mongoose.Schema(
       type: [String], // Changed from String to an array of strings
       default: [], // Default value as an empty array
     },
+    gender: {
+      type: String
+   },
   },
   {
     timestamps: true,

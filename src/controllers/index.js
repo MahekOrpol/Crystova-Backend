@@ -14,5 +14,6 @@ module.exports.discussionChatController=require('./discussionChat.controller');
 module.exports.registerController=require('./register.controller')
 module.exports.productController=require('./product.controller')
 module.exports.wishlistController=require('./wishlist.controller')
+module.exports.categoryController=require('./category.controller')
 
 

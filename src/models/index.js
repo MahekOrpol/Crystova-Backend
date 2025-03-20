@@ -18,5 +18,6 @@ module.exports.Register=require('./register.modal')
 module.exports.Products=require('./products.modal')
 module.exports.Wishlist=require('./wishlist.modal')
 module.exports.Cart=require('./cart.modal')
+module.exports.Category=require('./category.model')
 
 

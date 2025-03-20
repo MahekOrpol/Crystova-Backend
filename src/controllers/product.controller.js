@@ -32,6 +32,7 @@ const createProduct = {
         sku: Joi.string().required(),
         best_selling: Joi.string(),
         image: Joi.array().items(Joi.string()).optional(),
+        gender: Joi.string(),
       })
       .custom((value, helpers) => {
         if (value.salePrice > value.regularPrice) {
@@ -43,7 +44,7 @@ const createProduct = {
       }),
   },
   handler: async (req, res) => {
-  console.log('req.body :>> ', req.body)
+    console.log("req.body :>> ", req.body);
 
     // check if Product already exists
     const productsNameExits = await Products.findOne({
@@ -66,7 +67,9 @@ const createProduct = {
     let imagePaths = [];
     if (req.files && req.files.image) {
       // If single file, wrap in array
-      const filesArray = Array.isArray(req.files.image) ? req.files.image : [req.files.image];
+      const filesArray = Array.isArray(req.files.image)
+        ? req.files.image
+        : [req.files.image];
 
       for (const file of filesArray) {
         const { upload_path } = await saveFile(file);
@@ -74,7 +77,7 @@ const createProduct = {
       }
     }
     req.body.image = imagePaths;
-    
+
     // const upload_path_array = [];
     // if (req.files) {
     //   for (let i = 0; i < req.files.length; i++) {
@@ -111,6 +114,7 @@ const getAllProducts = {
       categoryName: Joi.string(),
       productName: Joi.string(),
       stock: Joi.string(),
+      gender: Joi.string(),
     }),
   },
   handler: async (req, res) => {
@@ -125,13 +129,16 @@ const getAllProducts = {
     }
 
     if (req.query?.productName) {
-      filter.productName = req.query.productName; // Filter by product name
+      filter.productName = req.query.productName; // Filter by product namenpm 
     }
-    
+
     if (req.query?.stock) {
       filter.stock = req.query.stock; // Filter by product name
     }
-    
+    if (req.query?.gender) {
+      filter.gender = req.query.gender; // Filter by product name
+    }
+
     const products = await Products.find(filter);
     return res.status(httpStatus.OK).send(products);
   },
@@ -167,7 +174,7 @@ const getTrendingProducts = {
       //   { $sort: { numericRating: -1 } },
       //   { $limit: 4 }
       // ]);
-      
+
       const products = await Products.find()
         .sort({ rating: -1 }) // Sort by highest rating
         .limit(4); // Get only the top 4 products
@@ -247,7 +254,9 @@ const updateProducts = {
     let imagePaths = [];
     if (req.files && req.files.image) {
       // If single file, wrap in array
-      const filesArray = Array.isArray(req.files.image) ? req.files.image : [req.files.image];
+      const filesArray = Array.isArray(req.files.image)
+        ? req.files.image
+        : [req.files.image];
 
       for (const file of filesArray) {
         const { upload_path } = await saveFile(file);
@@ -284,7 +293,7 @@ const deleteProduct = {
     }
 
     // delete old image
-   if (Array.isArray(productExits.image)) {
+    if (Array.isArray(productExits.image)) {
       for (const imgPath of productExits.image) {
         if (imgPath) await removeFile(imgPath);
       }
@@ -308,13 +317,13 @@ const multiDeleteProducts = {
   },
   handler: async (req, res) => {
     const { ids } = req.body;
-const parsedIds = typeof ids === 'string' ? ids.split(',') : ids;
+    const parsedIds = typeof ids === "string" ? ids.split(",") : ids;
 
-if (!Array.isArray(parsedIds) || parsedIds.length === 0) {
-  throw new ApiError(httpStatus.BAD_REQUEST, "No product IDs provided");
-}
+    if (!Array.isArray(parsedIds) || parsedIds.length === 0) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "No product IDs provided");
+    }
 
-      // Fetch products to remove their images
+    // Fetch products to remove their images
     const products = await Products.find({ _id: { $in: ids } });
 
     if (!products || products.length === 0) {
@@ -330,7 +339,7 @@ if (!Array.isArray(parsedIds) || parsedIds.length === 0) {
         await removeFile(product.image);
       }
     }
-    
+
     // Remove associated images
     // for (const product of products) {
     //   if (product?.image) {
@@ -358,7 +367,7 @@ const getSingleProduct = {
 
     // Check if product exists
     const product = await Products.findById(productId);
-    
+
     if (!product) {
       throw new ApiError(httpStatus.NOT_FOUND, "Product not found");
     }
@@ -366,7 +375,6 @@ const getSingleProduct = {
     return res.status(httpStatus.OK).send(product);
   },
 };
-
 
 module.exports = {
   createProduct,
@@ -377,5 +385,5 @@ module.exports = {
   getBestSelling,
   getOnSale,
   getSingleProduct,
-  multiDeleteProducts
+  multiDeleteProducts,
 };
