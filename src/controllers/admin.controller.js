@@ -54,7 +54,17 @@ const loginAdmin = {
   },
 };
 
+const getAllUser = {
+  handler: async (req, res) => {
+    const user = await Admin.find()
+    // console.log('user', user)
+    return res.status(httpStatus.OK).send(user);
+
+  }
+}
+
 module.exports = {
   loginAdmin,
   registerAdmin,
+  getAllUser
 };
