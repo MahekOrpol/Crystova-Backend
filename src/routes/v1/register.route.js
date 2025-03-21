@@ -11,4 +11,5 @@ router.post('/register', validate(registerController.register.validation), catch
 router.post('/login', validate(registerController.login.validation), catchAsync(registerController.login.handler));
 router.get('/get', catchAsync(registerController.getAllUser.handler));
 
+router.get('/single/:id', catchAsync(registerController.getUserById.handler));
 module.exports = router;

@@ -129,7 +129,7 @@ const getAllProducts = {
     }
 
     if (req.query?.productName) {
-      filter.productName = req.query.productName; // Filter by product namenpm 
+      filter.productName = req.query.productName; // Filter by product namenpm
     }
 
     if (req.query?.stock) {
@@ -182,6 +182,26 @@ const getTrendingProducts = {
       return res.status(httpStatus.OK).send(products);
     } catch (error) {
       return res.status(httpStatus.INTERNAL_SERVER_ERROR).send({
+        message: "Something went wrong",
+        error: error.message,
+      });
+    }
+  },
+};
+
+const getProductsByPrice = {
+  handler: async (req, res) => {
+    try {
+      const maxPrice = req.query.salePrice
+        ? parseFloat(req.query.salePrice)
+        : 1999; // Default: ₹1,999
+
+      const products = await Products.find({ salePrice: { $lt: maxPrice } }) // Filter products by salePrice
+        .sort({ rating: -1 }); // Sort by highest rating
+
+      return res.status(httpStatus.OK).json(products);
+    } catch (error) {
+      return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
         message: "Something went wrong",
         error: error.message,
       });
@@ -386,4 +406,5 @@ module.exports = {
   getOnSale,
   getSingleProduct,
   multiDeleteProducts,
+  getProductsByPrice,
 };

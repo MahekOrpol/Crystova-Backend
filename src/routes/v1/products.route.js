@@ -8,6 +8,7 @@ const router = express.Router();
 router.post('/create',validate(productController.createProduct.validation), catchAsync(productController.createProduct.handler));
 router.get('/get',validate(productController.getAllProducts.validation),catchAsync(productController.getAllProducts.handler));
 router.get('/getTopRated',catchAsync(productController.getTrendingProducts.handler));
+router.get('/getProductsByPrice',catchAsync(productController.getProductsByPrice.handler));
 router.get('/getOnSale',catchAsync(productController.getOnSale.handler));
 router.get('/getBestSelling',catchAsync(productController.getBestSelling.handler));
 router.put('/update/:_id', catchAsync(productController.updateProducts.handler));

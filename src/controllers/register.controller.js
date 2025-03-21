@@ -119,14 +119,13 @@ const login = {
 
         // Find user by email
         const user = await Register.findOne({ email });
-        console.log("User from DB:", user); // Debugging log
 
         if (!user) {
             return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid email or password" });
         }
 
-        // Check password match
-        const isMatch = await Register.isPasswordMatch(password);
+        // Check password match (CORRECTED)
+        const isMatch = await user.isPasswordMatch(password); // ✅ Fixed
         console.log("Password match:", isMatch); // Debugging log
 
         if (!isMatch) {
@@ -154,6 +153,18 @@ const getAllUser = {
   }
 }
 
+const getUserById = {
+  handler: async (req, res) => {
+  try {
+    console.log(req.params);
+    
+    const user = await Register.findById(req.params.id);
+    if (!user) return res.status(httpStatus.NOT_FOUND).json({ error: 'user not found' });
+    res.status(httpStatus.OK).json(user);
+  } catch (err) {
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ error: err.message });
+  }
+}};
 
 const logout = catchAsync(async (req, res) => {
   await authService.logout(req.body.refreshToken);
@@ -283,7 +294,7 @@ const forgotPassword = {
         .send({ success: true, message: "Password reset successfully", admin });
     }
     admin.password = password;
-    admin.confirmPassword = password;
+    admin.confirmPassword = '-';
     await admin.save();
   },
 };
@@ -305,5 +316,6 @@ module.exports = {
   sendOtp,
   verifyOTP,
   forgotPassword,
-  getAllUser
+  getAllUser,
+  getUserById,
 };
