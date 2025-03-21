@@ -5,9 +5,14 @@ const wishlistSchema = mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin", // Refers to Admin (User) schema
+      ref: "Register", // Refers to User schema
       required: true,
     },
+    // userType: {
+    //   type: String,
+    //   enum: ["Register", "Admin"], // Helps identify which model to query
+    //   required: true,
+    // },
     productId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Products", // Refers to Products schema
@@ -29,4 +34,3 @@ wishlistSchema.plugin(paginate);
 const Wishlist = mongoose.model("Wishlist", wishlistSchema);
 
 module.exports = Wishlist;
-``
