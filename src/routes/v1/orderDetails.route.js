@@ -1,5 +1,5 @@
 const express = require("express");
-const {  orderDetailsController, orderController } = require("../../controllers");
+const {  orderDetailsController } = require("../../controllers");
 const {
   updateOrderStatus,
   getOrderById,
@@ -9,6 +9,9 @@ const auth = require("../../middlewares/auth");
 const router = express.Router();
 
 // Create Order
-router.post("/create", orderController.createOrder);
+router.post("/create", orderDetailsController.createOrder);
+router.put("/update/:userId/:productId", updateOrderStatus);
+router.get("/get/:userId", getOrderById);
+router.get("/get-all", getAllOrders);
 
 module.exports = router;

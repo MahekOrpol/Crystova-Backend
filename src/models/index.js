@@ -19,6 +19,7 @@ module.exports.Products=require('./products.modal')
 module.exports.Wishlist=require('./wishlist.modal')
 module.exports.Cart=require('./cart.modal')
 module.exports.Category=require('./category.model')
+module.exports.OrderDetails=require('./orderDetails.model')
 module.exports.Order=require('./order.model')
 
 
