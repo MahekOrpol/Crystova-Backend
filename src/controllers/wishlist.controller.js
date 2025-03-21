@@ -72,34 +72,27 @@ const handleWishlist = async (req, res) => {
 
 const getAllWishlists = async (req, res) => {
   try {
-    const wishlistItems = await Wishlist.find().populate(
-      "productId",
-      "productName salePrice image"
-    ).lean();
+    const wishlistItems = await Wishlist.find()
+      .populate('productId', 'productName salePrice image categoryName')
+      .populate('userId', 'name email')  // ✅ Populate user details
+      .lean();
 
-    const populatedWishlist = await Promise.all(
-      wishlistItems.map(async (item) => {
-        let user = null;
-        if (item.userId) {
-          try {
-            const userModel = mongoose.model(item.userId); // "Register" or "Admin"
-            user = await userModel.findById(item.userId).select("name email").lean();
-          } catch (err) {
-            console.error(`Error fetching user for wishlist item ${item._id}:`, err);
-          }
-        }
-        return { ...item, user };
-      })
-    );
+    // Optional: Rename 'userId' to 'user' in the response
+    const formattedWishlist = wishlistItems.map((item) => ({
+      ...item,
+      user: item.userId,
+      userId: item.userId?._id || item.userId,  // Keeps userId in case you need it
+    }));
 
     return res.status(httpStatus.OK).json({
       message: "All wishlists retrieved successfully",
-      data: populatedWishlist,
+      data: formattedWishlist,
     });
   } catch (error) {
     return res.status(error.statusCode || 500).json({ message: error.message });
   }
 };
+
 
 
 module.exports = {

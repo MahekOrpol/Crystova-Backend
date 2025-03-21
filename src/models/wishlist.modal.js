@@ -5,7 +5,7 @@ const wishlistSchema = mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Register", // Refers to User schema
+      ref: "Register", 
       required: true,
     },
     // userType: {
