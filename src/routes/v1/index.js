@@ -19,6 +19,7 @@ const registerRoute = require("./register.route");
 const productRoute=require('./products.route')
 const wishlistRoute=require('./wishlist.route')
 const categoryRoute=require('./category.route')
+const orderRoute=require('./order.route')
 
 const router = express.Router();
 
@@ -102,6 +103,10 @@ const defaultRoutes = [
   {
     path: '/wishlist',
     route: wishlistRoute,
+  },
+  {
+    path: '/order',
+    route: orderRoute,
   },
 ];
 
