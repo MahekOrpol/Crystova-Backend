@@ -1,10 +1,13 @@
 const mongoose = require("mongoose");
 const { toJSON, paginate } = require("./plugins");
 const validator = require("validator"); // ✅ REQUIRED IMPORT
-const { OrderDetails } = require(".");
+const Counter = require("./counter.model"); 
 
 const orderSchema = mongoose.Schema(
   {
+    _id: {
+      type: String,
+    },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Register",
@@ -44,12 +47,25 @@ const orderSchema = mongoose.Schema(
       enum: ["Paid", "Unpaid"],
       default: "Unpaid",
     },
-  
   },
   {
     timestamps: true,
   }
 );
+
+orderSchema.pre("save", async function (next) {
+  const doc = this;
+  if (doc.isNew) {
+    const counter = await Counter.findOneAndUpdate(
+      { id: "order" },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    const seqNumber = counter.seq.toString().padStart(4, "0"); // 0001, 0002...
+    doc._id = `#${seqNumber}`;
+  }
+  next();
+});
 
 // add plugin that converts mongoose to json
 orderSchema.plugin(toJSON);

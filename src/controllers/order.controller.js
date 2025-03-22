@@ -7,7 +7,6 @@ const SavedAddress = require("../models/savedAddress.model");
 const Joi = require("joi");
 const mongoose = require("mongoose");
 
-// CREATE ORDER
 const createOrder = catchAsync(async (req, res) => {
   const schema = Joi.object({
     userId: Joi.string().required(),
@@ -19,7 +18,6 @@ const createOrder = catchAsync(async (req, res) => {
     paymentStatus: Joi.string().valid("Paid", "Unpaid").optional(),
     saveInfo: Joi.boolean().optional(),
 
-    // Address Details (optional but validated if saveInfo is true)
     email: Joi.string().trim().lowercase().email({ tlds: { allow: false } }).optional(),
     firstName: Joi.string().optional(),
     lastName: Joi.string().optional(),
@@ -37,11 +35,11 @@ const createOrder = catchAsync(async (req, res) => {
 
   const { userId, saveInfo } = value;
 
-  // ✅ 1. Fetch pending orderDetails with orderId: 0
   const pendingOrderDetails = await OrderDetails.find({ userId, orderId: 0 });
   if (!pendingOrderDetails || pendingOrderDetails.length === 0) {
     throw new ApiError(httpStatus.BAD_REQUEST, "No pending order details found for this user");
   }
+  ``
 
   // ✅ 2. Create the main Order
   const order = await Order.create({
@@ -60,9 +58,7 @@ const createOrder = catchAsync(async (req, res) => {
     { $set: { orderId: order._id } }
   );
 
-  // ✅ 4. If saveInfo is true, save the address
   if (saveInfo) {
-    // Validate required address fields for saving
     const addressSchema = Joi.object({
       email: Joi.string().required(),
       firstName: Joi.string().required(),
@@ -100,7 +96,6 @@ const createOrder = catchAsync(async (req, res) => {
     );
   }
 
-  // ✅ 5. Response back
   res.status(httpStatus.CREATED).json({
     status: true,
     message: "Order created successfully and orderId updated in OrderDetails",
@@ -120,7 +115,6 @@ const getAllOrders = catchAsync(async (req, res) => {
   });
 });
 
-// ✅ UPDATE ORDER STATUS BY ORDER ID (orderId in params)
 const updateOrderStatus = catchAsync(async (req, res) => {
   const { orderId } = req.params;
 
@@ -138,7 +132,6 @@ const updateOrderStatus = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
   }
 
-  // ✅ Update only the status
   order.status = status;
   await order.save();
 
@@ -149,7 +142,6 @@ const updateOrderStatus = catchAsync(async (req, res) => {
   });
 });
 
-// ✅ GET SINGLE ORDER BY ORDER ID (orderId in params)
 const getSingleOrder = catchAsync(async (req, res) => {
   const { orderId } = req.params;
 
@@ -161,7 +153,6 @@ const getSingleOrder = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
   }
 
-  // ✅ Fetch associated order details
   const orderDetails = await OrderDetails.find({ orderId: order._id });
 
   res.status(httpStatus.OK).json({
@@ -174,11 +165,9 @@ const getSingleOrder = catchAsync(async (req, res) => {
   });
 });
 
-// ✅ GET USER ORDERS BY USER ID (userId in params)
 const getUserOrders = catchAsync(async (req, res) => {
   const { userId } = req.params;
 
-  // ✅ Fetch all orders for this user
   const orders = await Order.find({ userId: mongoose.Types.ObjectId(userId) })
     .populate("userId") // Optional: Populate user data
     .lean();
@@ -187,7 +176,6 @@ const getUserOrders = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, "No orders found for this user");
   }
 
-  // ✅ For each order, fetch orderDetails
   const ordersWithDetails = await Promise.all(
     orders.map(async (order) => {
       const orderDetails = await OrderDetails.find({ orderId: order._id });
