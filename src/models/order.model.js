@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { toJSON, paginate } = require("./plugins");
+const validator = require("validator");  // ✅ REQUIRED IMPORT
 
 const orderSchema = mongoose.Schema(
   {
@@ -13,12 +14,12 @@ const orderSchema = mongoose.Schema(
       type: String,
       default: "mhk",
     },
-    addressId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Address",
-      required: true,
-      default: "addressId",
-    },
+    // addressId: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Address",
+    //   required: true,
+    //   default: "addressId",
+    // },
 
     discountTotal: {
       type: mongoose.Schema.Types.Decimal128,
@@ -61,30 +62,53 @@ const orderSchema = mongoose.Schema(
         },
       },
     ],
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      lowercase: true,
-      validate(value) {
-        if (!validator.isEmail(value)) {
-          throw new Error("Invalid email");
-        }
-      },
-    },
-    country: {
-      type: String,
-      required: true,
-    },
-    firstName: {
-      type: String,
-      required: true,
-    },
-    lastName: {
-      type: String,
-      required: true,
-    },
+    // email: {
+    //   type: String,
+    //   required: true,
+    //   unique: true,
+    //   trim: true,
+    //   lowercase: true,
+    //   validate(value) {
+    //     if (!validator.isEmail(value)) {
+    //       throw new Error("Invalid email");
+    //     }
+    //   },
+    // },
+    // country: {
+    //   type: String,
+    //   required: true,
+    // },
+    // firstName: {
+    //   type: String,
+    //   required: true,
+    // },
+    // lastName: {
+    //   type: String,
+    //   required: true,
+    // },
+    // address: {
+    //   type: String,
+    //   required: true,
+    // },
+    // apartment:{
+    //   type: String,
+    // },
+    // city:{
+    //   type: String,
+    //   required: true,
+    // },
+    // state:{
+    //   type: String,
+    //   required: true,
+    // },
+    // zipCode:{
+    //   type: String,
+    //   required: true,
+    // },
+    // phoneNumber:{
+    //   type: String,
+    //   required: true,
+    // },
   },
   {
     timestamps: true,
