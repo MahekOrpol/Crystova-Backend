@@ -13,7 +13,7 @@ const { Admin } = require("../models");
 const registerAdmin = {
   validation: {
     body: Joi.object().keys({
-      name: Joi.string().required(),
+      displayName: Joi.string().required(),
       email: Joi.string().required().email(),
       password: Joi.string().required().custom(password),
     }),

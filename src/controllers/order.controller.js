@@ -2,104 +2,89 @@ const httpStatus = require("http-status");
 const catchAsync = require("../utils/catchAsync");
 const ApiError = require("../utils/ApiError");
 const Order = require("../models/order.model");
-// const SavedAddress = require("../models/savedAddress.model"); // Import the SavedAddress model
+const OrderDetails = require("../models/orderDetails.model");
+const SavedAddress = require("../models/savedAddress.model");
 const Joi = require("joi");
 const mongoose = require("mongoose");
-const SavedAddress = require("../models/savedAddress.model");
 
 // CREATE ORDER
 const createOrder = catchAsync(async (req, res) => {
-  if (req.body.products && typeof req.body.products === "string") {
-    try {
-      req.body.products = JSON.parse(req.body.products);
-    } catch (err) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        "Invalid products JSON format"
-      );
-    }
-  }
-
-  const saveInfo = req.body.saveInfo === true || req.body.saveInfo === "true";
-
   const schema = Joi.object({
     userId: Joi.string().required(),
-    email: Joi.string()
-      .trim()
-      .lowercase()
-      .email({ tlds: { allow: false } })
-      .required(),
-    firstName: Joi.string().required(),
-    lastName: Joi.string().required(),
-    address: Joi.string().required(),
-    country: Joi.string().required(),
-    apartment: Joi.string().optional().allow(""),
-    city: Joi.string().required(),
-    state: Joi.string().required(),
-    zipCode: Joi.string().required(),
-    phoneNumber: Joi.string().required(),
     razorpayId: Joi.string().optional(),
     discountTotal: Joi.number().optional(),
     totalPrice: Joi.number().required(),
     couponCode: Joi.string().optional(),
-    status: Joi.string()
-      .valid("pending", "shipped", "delivered", "cancelled")
-      .optional(),
+    status: Joi.string().valid("pending", "shipped", "delivered", "cancelled").optional(),
     paymentStatus: Joi.string().valid("Paid", "Unpaid").optional(),
-    products: Joi.array()
-      .items(
-        Joi.object({
-          productId: Joi.string().required(),
-          quantity: Joi.number().required(),
-          price: Joi.number().required(),
-        })
-      )
-      .required(),
     saveInfo: Joi.boolean().optional(),
+
+    // Address Details (optional but validated if saveInfo is true)
+    email: Joi.string().trim().lowercase().email({ tlds: { allow: false } }).optional(),
+    firstName: Joi.string().optional(),
+    lastName: Joi.string().optional(),
+    address: Joi.string().optional(),
+    country: Joi.string().optional(),
+    apartment: Joi.string().optional().allow(""),
+    city: Joi.string().optional(),
+    state: Joi.string().optional(),
+    zipCode: Joi.string().optional(),
+    phoneNumber: Joi.string().optional(),
   });
 
-  // const { error, value } = schema.validate(req.body);
   const { error, value } = schema.validate(req.body, { allowUnknown: true });
+  if (error) throw new ApiError(httpStatus.BAD_REQUEST, error.details[0].message);
 
-  if (error) {
-    throw new ApiError(httpStatus.BAD_REQUEST, error.details[0].message);
+  const { userId, saveInfo } = value;
+
+  // ✅ 1. Fetch pending orderDetails with orderId: 0
+  const pendingOrderDetails = await OrderDetails.find({ userId, orderId: 0 });
+  if (!pendingOrderDetails || pendingOrderDetails.length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "No pending order details found for this user");
   }
 
-  // Format product IDs to ObjectId
-  const formattedProducts = value.products.map((product) => ({
-    productId: mongoose.Types.ObjectId(product.productId),
-    quantity: product.quantity,
-    price: product.price,
-  }));
-
-  // Create the order
+  // ✅ 2. Create the main Order
   const order = await Order.create({
-    userId: mongoose.Types.ObjectId(value.userId),
+    userId: mongoose.Types.ObjectId(userId),
     razorpayId: value.razorpayId,
     discountTotal: value.discountTotal || 0,
     totalPrice: value.totalPrice,
     couponCode: value.couponCode,
     status: value.status || "pending",
     paymentStatus: value.paymentStatus || "Unpaid",
-    products: formattedProducts,
-    email: value.email,
-    firstName: value.firstName,
-    lastName: value.lastName,
-    address: value.address,
-    country: value.country,
-    apartment: value.apartment,
-    city: value.city,
-    state: value.state,
-    zipCode: value.zipCode,
-    phoneNumber: value.phoneNumber,
   });
 
-  // ✅ Conditionally save contact & delivery info if saveInfo is true
+  // ✅ 3. Update those OrderDetails with the newly created order._id
+  await OrderDetails.updateMany(
+    { userId, orderId: 0 },
+    { $set: { orderId: order._id } }
+  );
+
+  // ✅ 4. If saveInfo is true, save the address
   if (saveInfo) {
+    // Validate required address fields for saving
+    const addressSchema = Joi.object({
+      email: Joi.string().required(),
+      firstName: Joi.string().required(),
+      lastName: Joi.string().required(),
+      address: Joi.string().required(),
+      country: Joi.string().required(),
+      apartment: Joi.string().optional().allow(""),
+      city: Joi.string().required(),
+      state: Joi.string().required(),
+      zipCode: Joi.string().required(),
+      phoneNumber: Joi.string().required(),
+    });
+
+    const { error: addressError } = addressSchema.validate(value);
+    if (addressError) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Address fields are missing for saveInfo");
+    }
+
     await SavedAddress.findOneAndUpdate(
-      { userId: mongoose.Types.ObjectId(value.userId) },
+      { userId: mongoose.Types.ObjectId(userId) },
       {
-        userId: mongoose.Types.ObjectId(value.userId),
+        userId: mongoose.Types.ObjectId(userId),
         email: value.email,
         firstName: value.firstName,
         lastName: value.lastName,
@@ -115,9 +100,10 @@ const createOrder = catchAsync(async (req, res) => {
     );
   }
 
+  // ✅ 5. Response back
   res.status(httpStatus.CREATED).json({
     status: true,
-    message: "Order created successfully",
+    message: "Order created successfully and orderId updated in OrderDetails",
     data: order,
   });
 });

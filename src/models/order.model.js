@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { toJSON, paginate } = require("./plugins");
-const validator = require("validator");  // ✅ REQUIRED IMPORT
+const validator = require("validator"); // ✅ REQUIRED IMPORT
+const { OrderDetails } = require(".");
 
 const orderSchema = mongoose.Schema(
   {
@@ -43,72 +44,7 @@ const orderSchema = mongoose.Schema(
       enum: ["Paid", "Unpaid"],
       default: "Unpaid",
     },
-    products: [
-      {
-        productId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Products",
-          required: true,
-        },
-        quantity: {
-          type: Number,
-          required: true,
-          default: 1,
-        },
-        price: {
-          type: mongoose.Schema.Types.Decimal128,
-          required: true,
-          default: 0,
-        },
-      },
-    ],
-    // email: {
-    //   type: String,
-    //   required: true,
-    //   unique: true,
-    //   trim: true,
-    //   lowercase: true,
-    //   validate(value) {
-    //     if (!validator.isEmail(value)) {
-    //       throw new Error("Invalid email");
-    //     }
-    //   },
-    // },
-    // country: {
-    //   type: String,
-    //   required: true,
-    // },
-    // firstName: {
-    //   type: String,
-    //   required: true,
-    // },
-    // lastName: {
-    //   type: String,
-    //   required: true,
-    // },
-    // address: {
-    //   type: String,
-    //   required: true,
-    // },
-    // apartment:{
-    //   type: String,
-    // },
-    // city:{
-    //   type: String,
-    //   required: true,
-    // },
-    // state:{
-    //   type: String,
-    //   required: true,
-    // },
-    // zipCode:{
-    //   type: String,
-    //   required: true,
-    // },
-    // phoneNumber:{
-    //   type: String,
-    //   required: true,
-    // },
+  
   },
   {
     timestamps: true,

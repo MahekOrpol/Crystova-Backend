@@ -31,6 +31,9 @@ const createOrder = catchAsync(async (req, res) => {
     .json({ status: true, message: "Order created successfully", data: order });
 });
 
+
+
+
 const updateOrderStatus = catchAsync(async (req, res) => {
     const { userId, productId } = req.params;
   
@@ -70,7 +73,7 @@ const updateOrderStatus = catchAsync(async (req, res) => {
   
 const getOrderById = catchAsync(async (req, res) => {
     const { userId } = req.params;
-  
+  console.log('userId :>> ', userId);
     const orderId = 0
     const orders = await OrderDetails.find({ userId,orderId })
       .populate("productId")
