@@ -108,6 +108,108 @@ const createOrder = catchAsync(async (req, res) => {
   });
 });
 
+const getAllOrders = catchAsync(async (req, res) => {
+  const orders = await Order.find()
+    .populate("productId") 
+    .populate("userId"); 
+
+  res.status(httpStatus.OK).json({
+    status: true,
+    message: "Orders fetched successfully",
+    data: orders,
+  });
+});
+
+// ✅ UPDATE ORDER STATUS BY ORDER ID (orderId in params)
+const updateOrderStatus = catchAsync(async (req, res) => {
+  const { orderId } = req.params;
+
+  const schema = Joi.object({
+    status: Joi.string().valid("pending", "shipped", "delivered", "cancelled").required(),
+  });
+
+  const { error, value } = schema.validate(req.body);
+  if (error) throw new ApiError(httpStatus.BAD_REQUEST, error.details[0].message);
+
+  const { status } = value;
+
+  const order = await Order.findById(orderId);
+  if (!order) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
+  }
+
+  // ✅ Update only the status
+  order.status = status;
+  await order.save();
+
+  res.status(httpStatus.OK).json({
+    status: true,
+    message: "Order status updated successfully",
+    data: order,
+  });
+});
+
+// ✅ GET SINGLE ORDER BY ORDER ID (orderId in params)
+const getSingleOrder = catchAsync(async (req, res) => {
+  const { orderId } = req.params;
+
+  const order = await Order.findById(orderId)
+    .populate("userId") // Populate user details
+    .lean();
+
+  if (!order) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
+  }
+
+  // ✅ Fetch associated order details
+  const orderDetails = await OrderDetails.find({ orderId: order._id });
+
+  res.status(httpStatus.OK).json({
+    status: true,
+    message: "Order fetched successfully",
+    data: {
+      order,
+      orderDetails,
+    },
+  });
+});
+
+// ✅ GET USER ORDERS BY USER ID (userId in params)
+const getUserOrders = catchAsync(async (req, res) => {
+  const { userId } = req.params;
+
+  // ✅ Fetch all orders for this user
+  const orders = await Order.find({ userId: mongoose.Types.ObjectId(userId) })
+    .populate("userId") // Optional: Populate user data
+    .lean();
+
+  if (!orders || orders.length === 0) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No orders found for this user");
+  }
+
+  // ✅ For each order, fetch orderDetails
+  const ordersWithDetails = await Promise.all(
+    orders.map(async (order) => {
+      const orderDetails = await OrderDetails.find({ orderId: order._id });
+      return {
+        ...order,
+        orderDetails,
+      };
+    })
+  );
+
+  res.status(httpStatus.OK).json({
+    status: true,
+    message: "User orders fetched successfully",
+    data: ordersWithDetails,
+  });
+});
+
+
 module.exports = {
   createOrder,
+  getAllOrders,
+  updateOrderStatus,
+  getSingleOrder,
+  getUserOrders
 };
