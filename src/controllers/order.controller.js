@@ -145,7 +145,7 @@ const updateOrderStatus = catchAsync(async (req, res) => {
 const getSingleOrder = catchAsync(async (req, res) => {
   const { orderId } = req.params;
 
-  const order = await Order.findById(orderId)
+  const order = await Order.findOne({ orderId })
     .populate("userId") // Populate user details
     .lean();
 
@@ -164,6 +164,7 @@ const getSingleOrder = catchAsync(async (req, res) => {
     },
   });
 });
+
 
 const getUserOrders = catchAsync(async (req, res) => {
   const { userId } = req.params;

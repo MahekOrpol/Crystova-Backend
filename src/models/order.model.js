@@ -5,9 +5,9 @@ const Counter = require("./counter.model");
 
 const orderSchema = mongoose.Schema(
   {
-    _id: {
+    orderId: {
       type: String,
-    },
+    }, 
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Register",
@@ -62,7 +62,7 @@ orderSchema.pre("save", async function (next) {
       { new: true, upsert: true }
     );
     const seqNumber = counter.seq.toString().padStart(4, "0"); // 0001, 0002...
-    doc._id = `#${seqNumber}`;
+    doc.orderId = `${seqNumber}`;
   }
   next();
 });
