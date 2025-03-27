@@ -63,11 +63,12 @@ orderSchema.pre("save", async function (next) {
     );
     const seqNumber = counter.seq.toString().padStart(4, "0"); // 0001, 0002...
     doc.orderId = `${seqNumber}`;
+  
   }
   next();
 });
 
-// add plugin that converts mongoose to json
+
 orderSchema.plugin(toJSON);
 orderSchema.plugin(paginate);
 

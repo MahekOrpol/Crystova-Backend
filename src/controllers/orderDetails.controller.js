@@ -88,9 +88,8 @@ const getOrderById = catchAsync(async (req, res) => {
       message: "Orders fetched successfully",
       data: orders,
     });
-  });
-  
-  
+
+  });  
 
 const getAllOrders = catchAsync(async (req, res) => {
   const orders = await OrderDetails.find()

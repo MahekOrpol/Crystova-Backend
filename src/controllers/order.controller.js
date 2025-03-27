@@ -40,7 +40,6 @@ const createOrder = catchAsync(async (req, res) => {
   if (!pendingOrderDetails || pendingOrderDetails.length === 0) {
     throw new ApiError(httpStatus.BAD_REQUEST, "No pending order details found for this user");
   }
-  ``
 
   // ✅ 2. Create the main Order
   const order = await Order.create({
@@ -56,7 +55,7 @@ const createOrder = catchAsync(async (req, res) => {
   // ✅ 3. Update those OrderDetails with the newly created order._id
   await OrderDetails.updateMany(
     { userId, orderId: 0 },
-    { $set: { orderId: order._id } }
+    { $set: { orderId: order.orderId } }
   );
 
   if (saveInfo) {
