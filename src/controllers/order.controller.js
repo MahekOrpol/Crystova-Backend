@@ -153,7 +153,7 @@ const getSingleOrder = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
   }
 
-  const orderDetails = await OrderDetails.find({ orderId: order._id })
+  const orderDetails = await OrderDetails.find({ orderId: order.orderId }) 
   .populate("productId") // Populate user details
   .lean();
 
@@ -181,7 +181,7 @@ const getUserOrders = catchAsync(async (req, res) => {
 
   const ordersWithDetails = await Promise.all(
     orders.map(async (order) => {
-      const orderDetails = await OrderDetails.find({ orderId: order._id });
+      const orderDetails = await OrderDetails.find({ orderId: order.orderId });
       return {
         ...order,
         orderDetails,
