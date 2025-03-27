@@ -6,6 +6,7 @@ const OrderDetails = require("../models/orderDetails.model");
 const SavedAddress = require("../models/savedAddress.model");
 const Joi = require("joi");
 const mongoose = require("mongoose");
+const { Products } = require("../models");
 
 const createOrder = catchAsync(async (req, res) => {
   const schema = Joi.object({
@@ -153,7 +154,10 @@ const getSingleOrder = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
   }
 
-  const orderDetails = await OrderDetails.find({ orderId: order._id });
+  const orderDetails = await OrderDetails.find({ orderId: order._id })
+  .populate("productId") // Populate user details
+  .lean();
+
 
   res.status(httpStatus.OK).json({
     status: true,
@@ -164,7 +168,6 @@ const getSingleOrder = catchAsync(async (req, res) => {
     },
   });
 });
-
 
 const getUserOrders = catchAsync(async (req, res) => {
   const { userId } = req.params;
