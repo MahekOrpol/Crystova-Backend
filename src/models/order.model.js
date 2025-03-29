@@ -39,7 +39,7 @@ const orderSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "shipped", "delivered", "cancelled"],
+      enum: ["pending", "confirm","shipped", "delivered", "cancelled"],
       default: "pending",
     },
     paymentStatus: {
@@ -47,6 +47,14 @@ const orderSchema = mongoose.Schema(
       enum: ["Paid", "Unpaid"],
       default: "Unpaid",
     },
+    selectedSize: { 
+       type: Number, 
+      require:true,
+    },
+    selectQuantity: {
+        type: Number, 
+       require:true,
+       },
   },
   {
     timestamps: true,

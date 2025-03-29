@@ -8,6 +8,7 @@ const Joi = require("joi");
 const mongoose = require("mongoose");
 const { Products } = require("../models");
 
+
 const createOrder = catchAsync(async (req, res) => {
   const schema = Joi.object({
     userId: Joi.string().required(),
@@ -18,7 +19,6 @@ const createOrder = catchAsync(async (req, res) => {
     status: Joi.string().valid("pending", "shipped", "delivered", "cancelled").optional(),
     paymentStatus: Joi.string().valid("Paid", "Unpaid").optional(),
     saveInfo: Joi.boolean().optional(),
-
     email: Joi.string().trim().lowercase().email({ tlds: { allow: false } }).optional(),
     firstName: Joi.string().optional(),
     lastName: Joi.string().optional(),
@@ -35,13 +35,11 @@ const createOrder = catchAsync(async (req, res) => {
   if (error) throw new ApiError(httpStatus.BAD_REQUEST, error.details[0].message);
 
   const { userId, saveInfo } = value;
-
   const pendingOrderDetails = await OrderDetails.find({ userId, orderId: 0 });
   if (!pendingOrderDetails || pendingOrderDetails.length === 0) {
     throw new ApiError(httpStatus.BAD_REQUEST, "No pending order details found for this user");
   }
 
-  // ✅ 2. Create the main Order
   const order = await Order.create({
     userId: mongoose.Types.ObjectId(userId),
     razorpayId: value.razorpayId,
@@ -52,10 +50,9 @@ const createOrder = catchAsync(async (req, res) => {
     paymentStatus: value.paymentStatus || "Unpaid",
   });
 
-  // ✅ 3. Update those OrderDetails with the newly created order._id
   await OrderDetails.updateMany(
     { userId, orderId: 0 },
-    { $set: { orderId: order.orderId } }
+    { $set: { orderId: order._id } }
   );
 
   if (saveInfo) {
@@ -119,7 +116,12 @@ const updateOrderStatus = catchAsync(async (req, res) => {
   const { orderId } = req.params;
 
   const schema = Joi.object({
-    status: Joi.string().valid("pending", "shipped", "delivered", "cancelled").required(),
+    razorpayId: Joi.string().optional(),
+    discountTotal: Joi.number().optional(),
+    totalPrice: Joi.number().optional(),
+    couponCode: Joi.string().optional(),
+    status: Joi.string().valid("pending","confirm", "shipped", "delivered", "cancelled").optional(),
+    paymentStatus: Joi.string().valid("Paid", "Unpaid").optional(),
   });
 
   const { error, value } = schema.validate(req.body);
@@ -132,7 +134,7 @@ const updateOrderStatus = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
   }
 
-  order.status = status;
+  Object.assign(order, value);
   await order.save();
 
   res.status(httpStatus.OK).json({
@@ -181,7 +183,14 @@ const getUserOrders = catchAsync(async (req, res) => {
 
   const ordersWithDetails = await Promise.all(
     orders.map(async (order) => {
-      const orderDetails = await OrderDetails.find({ orderId: order.orderId });
+      // Fetch order details
+      const orderDetails = await OrderDetails.find({ orderId: order.orderId })
+        .populate({
+          path: "productId", // Assuming productId is stored in OrderDetails
+          model: "Products", // Reference to the Product model
+        })
+        .lean();
+
       return {
         ...order,
         orderDetails,
@@ -197,10 +206,57 @@ const getUserOrders = catchAsync(async (req, res) => {
 });
 
 
+const getSavedAddress = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    const savedAddress = await SavedAddress.findOne({ userId });
+
+    if (!savedAddress) {
+      return res.status(404).json({ message: "No saved address found" });
+    }
+
+    res.status(200).json(savedAddress);
+  } catch (error) {
+    console.error("Error fetching saved address:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const getPendingOrder = catchAsync(async (req, res) => {
+  const { userId } = req.params;
+  
+  const pendingOrder = await Order.findOne({
+    userId: mongoose.Types.ObjectId(userId),
+    status: "pending",
+    paymentStatus: "Unpaid",
+  });
+
+  if (!pendingOrder) {
+    return res.status(httpStatus.OK).json({
+      status: false,
+      message: "No pending order found",
+    });
+  }
+
+  res.status(httpStatus.OK).json({
+    status: true,
+    message: "Pending order found",
+    orderId: pendingOrder._id,
+  });
+});
+
+
 module.exports = {
   createOrder,
   getAllOrders,
   updateOrderStatus,
   getSingleOrder,
-  getUserOrders
+  getUserOrders,
+  getSavedAddress,
+  getPendingOrder
 };
