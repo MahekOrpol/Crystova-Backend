@@ -8,7 +8,6 @@ const Joi = require("joi");
 const mongoose = require("mongoose");
 const { Products } = require("../models");
 
-
 const createOrder = catchAsync(async (req, res) => {
   const schema = Joi.object({
     userId: Joi.string().required(),
@@ -16,10 +15,16 @@ const createOrder = catchAsync(async (req, res) => {
     discountTotal: Joi.number().optional(),
     totalPrice: Joi.number().required(),
     couponCode: Joi.string().optional(),
-    status: Joi.string().valid("pending", "shipped", "delivered", "cancelled").optional(),
+    status: Joi.string()
+      .valid("pending", "confirm", "shipped", "delivered", "cancelled")
+      .optional(),
     paymentStatus: Joi.string().valid("Paid", "Unpaid").optional(),
     saveInfo: Joi.boolean().optional(),
-    email: Joi.string().trim().lowercase().email({ tlds: { allow: false } }).optional(),
+    email: Joi.string()
+      .trim()
+      .lowercase()
+      .email({ tlds: { allow: false } })
+      .optional(),
     firstName: Joi.string().optional(),
     lastName: Joi.string().optional(),
     address: Joi.string().optional(),
@@ -29,15 +34,24 @@ const createOrder = catchAsync(async (req, res) => {
     state: Joi.string().optional(),
     zipCode: Joi.string().optional(),
     phoneNumber: Joi.string().optional(),
+    selectedSize: Joi.number().required(),
+    selectQuantity: Joi.number().required(),
+    
   });
 
   const { error, value } = schema.validate(req.body, { allowUnknown: true });
-  if (error) throw new ApiError(httpStatus.BAD_REQUEST, error.details[0].message);
+  if (error)
+    throw new ApiError(httpStatus.BAD_REQUEST, error.details[0].message);
 
-  const { userId, saveInfo } = value;
+  // const { userId, saveInfo } = value;
+  const { userId, saveInfo, selectedSize, selectQuantity } = value;
+
   const pendingOrderDetails = await OrderDetails.find({ userId, orderId: 0 });
   if (!pendingOrderDetails || pendingOrderDetails.length === 0) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "No pending order details found for this user");
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "No pending order details found for this user"
+    );
   }
 
   const order = await Order.create({
@@ -48,11 +62,13 @@ const createOrder = catchAsync(async (req, res) => {
     couponCode: value.couponCode,
     status: value.status || "pending",
     paymentStatus: value.paymentStatus || "Unpaid",
+    selectedSize: Number(selectedSize)|| null, 
+    selectQuantity: Number(selectQuantity)||null, 
   });
 
   await OrderDetails.updateMany(
     { userId, orderId: 0 },
-    { $set: { orderId: order._id } }
+    { $set: { orderId: order.orderId } }
   );
 
   if (saveInfo) {
@@ -71,7 +87,10 @@ const createOrder = catchAsync(async (req, res) => {
 
     const { error: addressError } = addressSchema.validate(value);
     if (addressError) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Address fields are missing for saveInfo");
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Address fields are missing for saveInfo"
+      );
     }
 
     await SavedAddress.findOneAndUpdate(
@@ -88,6 +107,7 @@ const createOrder = catchAsync(async (req, res) => {
         state: value.state,
         zipCode: value.zipCode,
         phoneNumber: value.phoneNumber,
+
       },
       { upsert: true, new: true }
     );
@@ -101,9 +121,7 @@ const createOrder = catchAsync(async (req, res) => {
 });
 
 const getAllOrders = catchAsync(async (req, res) => {
-  const orders = await Order.find()
-    .populate("productId") 
-    .populate("userId"); 
+  const orders = await Order.find().populate("productId").populate("userId");
 
   res.status(httpStatus.OK).json({
     status: true,
@@ -120,12 +138,15 @@ const updateOrderStatus = catchAsync(async (req, res) => {
     discountTotal: Joi.number().optional(),
     totalPrice: Joi.number().optional(),
     couponCode: Joi.string().optional(),
-    status: Joi.string().valid("pending","confirm", "shipped", "delivered", "cancelled").optional(),
+    status: Joi.string()
+      .valid("pending", "confirm", "shipped", "delivered", "cancelled")
+      .optional(),
     paymentStatus: Joi.string().valid("Paid", "Unpaid").optional(),
   });
 
   const { error, value } = schema.validate(req.body);
-  if (error) throw new ApiError(httpStatus.BAD_REQUEST, error.details[0].message);
+  if (error)
+    throw new ApiError(httpStatus.BAD_REQUEST, error.details[0].message);
 
   const { status } = value;
 
@@ -155,10 +176,9 @@ const getSingleOrder = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
   }
 
-  const orderDetails = await OrderDetails.find({ orderId: order.orderId }) 
-  .populate("productId") // Populate user details
-  .lean();
-
+  const orderDetails = await OrderDetails.find({ orderId: order.orderId })
+    .populate("productId") // Populate user details
+    .lean();
 
   res.status(httpStatus.OK).json({
     status: true,
@@ -205,7 +225,6 @@ const getUserOrders = catchAsync(async (req, res) => {
   });
 });
 
-
 const getSavedAddress = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -229,7 +248,7 @@ const getSavedAddress = async (req, res) => {
 
 const getPendingOrder = catchAsync(async (req, res) => {
   const { userId } = req.params;
-  
+
   const pendingOrder = await Order.findOne({
     userId: mongoose.Types.ObjectId(userId),
     status: "pending",
@@ -250,7 +269,6 @@ const getPendingOrder = catchAsync(async (req, res) => {
   });
 });
 
-
 module.exports = {
   createOrder,
   getAllOrders,
@@ -258,5 +276,5 @@ module.exports = {
   getSingleOrder,
   getUserOrders,
   getSavedAddress,
-  getPendingOrder
+  getPendingOrder,
 };
