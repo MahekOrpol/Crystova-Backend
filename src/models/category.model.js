@@ -8,6 +8,10 @@ const categoriesSchema = mongoose.Schema(
       required: true,
       trim: true,
     },
+    categoryImage: {
+      type: String, // Storing image URL or file path
+      trim: true,
+    },
   },
   {
     timestamps: true,

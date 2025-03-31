@@ -1,107 +1,109 @@
 const httpStatus = require("http-status");
-const catchAsync = require("../utils/catchAsync");
-const {
-  authService,
-  userService,
-  tokenService,
-  emailService,
-} = require("../services");
 const Joi = require("joi");
-const { password } = require("../validations/custom.validation");
-const { Products, Game } = require("../models");
 const ApiError = require("../utils/ApiError");
-const { saveFile, removeFile } = require("../utils/helper");
 const Category = require("../models/category.model");
+const { saveFile, removeFile } = require("../utils/helper");
 
 const createCategory = {
   validation: {
-    body: Joi.object()
-      .keys({
-        categoryName: Joi.string().required(),
-       
-      })
-      .custom((value, helpers) => {
-        if (value.salePrice > value.regularPrice) {
-          return helpers.error(
-            "Sale price cannot be greater than regular price"
-          );
-        }
-        return value;
-      }),
+    body: Joi.object().keys({
+      categoryName: Joi.string().required(),
+      categoryImage: Joi.string().optional(),
+    }),
   },
   handler: async (req, res) => {
     console.log("req.body :>> ", req.body);
+    
+    const { categoryName } = req.body;
+    let categoryImage = req.file ? await saveFile(req.file) : null;
 
-    // check if Product already exists
-    const productsNameExits = await Category.findOne({
-      categoryName: req.body.categoryName,
-    });
-   
-    if (productsNameExits) {
+    // Check if category already exists
+    const categoryExists = await Category.findOne({ categoryName });
+    if (categoryExists) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Category already exists");
     }
-  
- 
-    const products = await new Category(req.body).save();
-    return res.status(httpStatus.CREATED).send(products);
+
+    // Create new category
+    const category = new Category({ categoryName, categoryImage });
+    await category.save();
+
+    return res.status(httpStatus.CREATED).json({
+      success: true,
+      message: "Category created successfully",
+      data: {
+        id: category._id,
+        categoryName: category.categoryName,
+        categoryImage: category.categoryImage || null,
+        createdAt: category.createdAt,
+      },
+    });
   },
 };
 
 const getCategory = {
-    handler: async (req, res) => {
-        const assignmentTask = await Category.find();
-        return res.status(httpStatus.OK).send(assignmentTask);
-    }
+  handler: async (req, res) => {
+    const categories = await Category.find();
+    return res.status(httpStatus.OK).send(categories);
+  },
+};
 
-}
-
-const updateProducts = {
+const updateCategory = {
   handler: async (req, res) => {
     const { _id } = req.params;
+    const { categoryName } = req.body;
+    let categoryImage = req.file ? await saveFile(req.file) : null;
 
-    const productExits = await Category.findOne({ _id });
-    if (!productExits) {
+    const categoryExists = await Category.findOne({ _id });
+    if (!categoryExists) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Category not found");
     }
 
-    // check if Products already exists
-    const productsWithNameExits = await Category.findOne({
-      categoryName: req.body?.categoryName,
+    // Prevent duplicate category names
+    const duplicateCategory = await Category.findOne({
+      categoryName,
       _id: { $ne: _id },
-    }).exec();
-    if (productsWithNameExits) {
+    });
+    if (duplicateCategory) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Category already exists");
     }
 
-    // update Products
-    const updateProducts = await Category.findOneAndUpdate({ _id }, req.body, {
-      new: true,
-    });
-    return res.status(httpStatus.OK).send(updateProducts);
+    // Remove old image if a new one is uploaded
+    if (categoryImage && categoryExists.categoryImage) {
+      await removeFile(categoryExists.categoryImage);
+    }
+
+    // Update category
+    categoryExists.categoryName = categoryName || categoryExists.categoryName;
+    categoryExists.categoryImage = categoryImage || categoryExists.categoryImage;
+    await categoryExists.save();
+
+    return res.status(httpStatus.OK).send(categoryExists);
   },
 };
 
-const deleteProduct = {
+const deleteCategory = {
   handler: async (req, res) => {
     const { _id } = req.params;
 
-    const productExits = await Category.findOne({ _id });
-    if (!productExits) {
+    const categoryExists = await Category.findOne({ _id });
+    if (!categoryExists) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Category not found");
     }
 
-    // delete Products
+    // Remove image if exists
+    if (categoryExists.categoryImage) {
+      await removeFile(categoryExists.categoryImage);
+    }
+
+    // Delete category
     await Category.deleteOne({ _id });
-    return res
-      .status(httpStatus.OK)
-      .send({ message: "Category deleted successfully" });
+    return res.status(httpStatus.OK).send({ message: "Category deleted successfully" });
   },
 };
-
 
 module.exports = {
   createCategory,
   getCategory,
-  updateProducts,
-  deleteProduct,
+  updateCategory,
+  deleteCategory,
 };

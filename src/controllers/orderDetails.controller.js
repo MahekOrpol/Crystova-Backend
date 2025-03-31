@@ -122,9 +122,25 @@ const getAllOrders = catchAsync(async (req, res) => {
   });
 });
 
+const deleteOrderDetails = catchAsync(async (req, res) => {
+  const { orderId } = req.params;
+
+  const order = await OrderDetails.findByIdAndDelete(orderId);
+  
+  if (!order) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
+  }
+
+  res.status(httpStatus.OK).json({
+    status: true,
+    message: "Order deleted successfully",
+  });
+});
+
 module.exports = {
   createOrder,
   updateOrderStatus,
   getOrderById,
   getAllOrders,
+  deleteOrderDetails
 };

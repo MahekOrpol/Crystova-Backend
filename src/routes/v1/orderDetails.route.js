@@ -14,4 +14,6 @@ router.put("/update/:userId/:productId", updateOrderStatus);
 router.get("/get/:userId", getOrderById);
 router.get("/get-all", getAllOrders);
 
+router.delete('/delete/:orderId',orderDetailsController.deleteOrderDetails)
+
 module.exports = router;

@@ -142,7 +142,11 @@ const updateUserProfile = {
     // }
     const { userId } = req.params;
     const user = await User.findOne({ user_id: userId }, req.body);
-    return res.send(user);
+    return res.status(httpStatus.OK).json({
+      status: true,
+      message: "Profile Updated successfully",
+      data: user,
+    });
   },
 };
 
@@ -167,7 +171,11 @@ const createUserProfile = {
   },
   handler: async (req, res) => {
     const user = await User.create(req.body);
-    return res.send(user);
+    return res.status(httpStatus.OK).json({
+        status: true,
+        message: "Profile Created successfully",
+        data: user,
+      });
   },
 };
 
