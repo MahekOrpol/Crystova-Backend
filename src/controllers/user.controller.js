@@ -8,6 +8,7 @@ const { saveFile } = require('../utils/helper');
 const { password } = require('../validations/custom.validation');
 const { Admin, User, Room } = require('../models');
 const { log } = require('../config/logger');
+const mongoose = require('mongoose');
 
 // const createUser = catchAsync(async (req, res) => {
 //   const user = await userService.createUser(req.body);
@@ -121,31 +122,61 @@ const createTeacher = {
   }
 }
 
-const updateMe = {
+const updateUserProfile = {
   validation: {
     body: Joi.object().keys({
       firstName: Joi.string(),
       lastName: Joi.string(),
-      email: Joi.string(),
-      phone: Joi.string(),
-      profileImage: Joi.string(),
-      gender: Joi.string(),
+            phone: Joi.string(),
+          gender: Joi.string(),
       birthday: Joi.string(),
-      spId: Joi.string(),
-      year: Joi.string(),
-      semester: Joi.string(),
-      division: Joi.string(),
-      otherDivision: Joi.string()
+      address:Joi.string(),
+      address_line2:Joi.string(),
+
+      city:Joi.string(),
+      state:Joi.string(),
+      postalCode:Joi.string(),
+
+
     })
   },
   handler: async (req, res) => {
-    if (req.files && req.files?.profileImage) {
-      const { upload_path } = await saveFile(req.files?.profileImage);
-      req.body.profileImage = upload_path;
-    }
+    // if (req.files && req.files?.profileImage) {
+    //   const { upload_path } = await saveFile(req.files?.profileImage);
+    //   req.body.profileImage = upload_path;
+    // }
+const{userId} = req.params;
+    const user = await User.findOne({user_id:userId}, req.body);
+   return  res.send(user);
+  }
+}
 
-    const user = await userService.updateUserById(req.user.id, req.body);
-    res.send(user);
+const createUserProfile = {
+  validation: {
+    body: Joi.object().keys({
+      user_id:Joi.string(),
+      firstName: Joi.string(),
+      email: Joi.string(),
+
+      lastName: Joi.string(),
+            phone: Joi.string(),
+          gender: Joi.string(),
+      birthday: Joi.string(),
+      address:Joi.string(),
+      address_line2:Joi.string(),
+
+      city:Joi.string(),
+      state:Joi.string(),
+      postalCode:Joi.string(),
+
+
+    })
+  },
+  handler: async (req, res) => {
+ 
+
+    const user = await User.create( req.body);
+   return  res.send(user);
   }
 }
 
@@ -276,6 +307,57 @@ const getSearchName = {
   }
 }
 
+
+const getUserProfile = {
+
+  handler: async (req, res) => {
+    // console.log("hello", req.body)
+
+
+    const {userId} = req.params
+
+    console.log("userid",userId);
+    const userData = await User.findOne({user_id:userId}).exec();
+    if (!userData) {
+      return res.status(httpStatus.BAD_REQUEST).send({
+        message: 'User not found',
+      });
+    }
+ 
+    return res.status(httpStatus.OK).send(userData);
+  }
+}
+
+
+
+
+const updateProfileImage = {
+
+  handler: async (req, res) => {
+    // console.log("hello", req.body)
+
+    if (!req.files?.image || !req.body.user_id) {
+      return res.status(httpStatus.BAD_REQUEST).send({
+        message: 'User not found',
+      });
+    }
+    if (req.files && req.files?.image) {
+      const { upload_path } = await saveFile(req.files?.image);
+      req.body.image = upload_path;
+    }
+
+    console.log("req.body.image",req.body.image);
+    const userData = await User.findOneAndUpdate({user_id:req.body.user_id,},{profilePicture:req.body.image}).exec();
+    if (!userData) {
+      return res.status(httpStatus.BAD_REQUEST).send({
+        message: 'User not found',
+      });
+    }
+ 
+    return res.status(httpStatus.OK).send(userData);
+  }
+}
+
 module.exports = {
   createTeacher,
   // getUsers,
@@ -283,11 +365,13 @@ module.exports = {
   // updateUser,
   // deleteUser,
   getMe,
-  updateMe,
+ 
   // updateMe,
   getAllTeacher,
   updateTeacher,
+  createUserProfile,
   deleteTeacher,
   getSearchName,
   getAllUser
+  ,getUserProfile,updateUserProfile,updateProfileImage
 };

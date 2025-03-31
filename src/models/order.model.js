@@ -47,14 +47,6 @@ const orderSchema = mongoose.Schema(
       enum: ["Paid", "Unpaid"],
       default: "Unpaid",
     },
-    selectedSize: { 
-       type: Number, 
-      require:true,
-    },
-    selectQuantity: {
-        type: Number, 
-       require:true,
-       },
   },
   {
     timestamps: true,

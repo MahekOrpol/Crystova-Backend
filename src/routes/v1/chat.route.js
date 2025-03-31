@@ -8,5 +8,6 @@ const  router = express.Router();
 router.post('/create', auth(),validate(chatController.createChat.validation),catchAsync(chatController.createChat.handler));
 router.get('/get',catchAsync(chatController.getChat.handler));
 router.delete('/delete/:id',catchAsync(chatController.deleteChat.handler));
+
 module.exports = router;    
 

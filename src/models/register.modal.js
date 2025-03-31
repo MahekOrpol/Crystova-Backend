@@ -16,7 +16,7 @@ const registerSchema = mongoose.Schema(
     phone : {
       type: String,
       required: true,
-      minlength:9,
+      minlength:9,  
       maxlength:10
     },
     email: {

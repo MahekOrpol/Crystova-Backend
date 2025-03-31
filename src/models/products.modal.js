@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { toJSON, paginate } = require("./plugins");
+const { ProductVariations } = require("./index");
 
 const productsSchema = mongoose.Schema(
   {
@@ -81,11 +82,50 @@ const productsSchema = mongoose.Schema(
     gender: {
       type: String
    },
+   hasVariations: { type: Boolean, default: false },
+   variations: [{ type: mongoose.Schema.Types.ObjectId, ref: "ProductVariation" }],
   },
   {
     timestamps: true,
   }
 );
+
+productsSchema.pre("findOneAndDelete", async function (next) {
+  try {
+    const product = await this.model.findOne(this.getQuery());
+    if (product) {
+      await ProductVariations.deleteMany({ productId: product._id });
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Middleware for direct `deleteOne`
+productsSchema.pre("deleteOne", { document: true, query: false }, async function (next) {
+  try {
+    await ProductVariations.deleteMany({ productId: this._id });
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Middleware for multiple product deletion
+// productsSchema.pre("deleteMany", async function (next) {
+//   try {
+//     console.log('deleteMany---> ')
+//     const products = await this.model.find(this.getQuery()); // Get all matching products
+//     const productIds = products.map((product) => product._id); // Extract IDs
+//     if (productIds.length) {
+//       await ProductVariations.deleteMany({ productId: { $in: productIds } });
+//     }
+//     next();
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
 // add plugin that converts mongoose to json
 productsSchema.plugin(toJSON);

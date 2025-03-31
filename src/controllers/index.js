@@ -17,5 +17,6 @@ module.exports.wishlistController=require('./wishlist.controller')
 module.exports.categoryController=require('./category.controller')
 module.exports.orderDetailsController=require('./orderDetails.controller')
 module.exports.orderController=require('./order.controller')
+module.exports.paymentController=require('./payment.controller')
 
 

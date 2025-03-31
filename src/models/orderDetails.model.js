@@ -8,6 +8,14 @@ const orderSchema = mongoose.Schema(
       ref: "Products", // Refers to Products schema
       required: true,
     },
+    variation: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ProductVariation",
+        default: null, 
+      }
+    ],
+    
     orderId: {
       type: String,
       ref: "Order", // Refers to Products schema
@@ -32,6 +40,7 @@ const orderSchema = mongoose.Schema(
       type: mongoose.Schema.Types.Decimal128,
       default: 0,
     },
+
     // totalPrice: {
     //   type: String,
     // },

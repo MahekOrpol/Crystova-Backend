@@ -8,9 +8,10 @@ const {
 } = require("../services");
 const Joi = require("joi");
 const { password } = require("../validations/custom.validation");
-const { Products, Game } = require("../models");
+const { Products, ProductVariations, Game } = require("../models");
 const ApiError = require("../utils/ApiError");
 const { saveFile, removeFile } = require("../utils/helper");
+const { log } = require("../config/logger");
 
 const createProduct = {
   validation: {
@@ -33,6 +34,20 @@ const createProduct = {
         best_selling: Joi.string(),
         image: Joi.array().items(Joi.string()).optional(),
         gender: Joi.string(),
+        hasVariations: Joi.boolean().default(false),
+        variations: Joi.alternatives()
+          .try(
+            Joi.array().items(
+              Joi.object({
+                productSize: Joi.string().required(),
+                regularPrice: Joi.number().precision(2).required(),
+                salePrice: Joi.number().precision(2).required(),
+                discount: Joi.number().precision(2).optional(),
+              })
+            ),
+            Joi.string() // Allow JSON string
+          )
+          .optional(),
       })
       .custom((value, helpers) => {
         if (value.salePrice > value.regularPrice) {
@@ -45,6 +60,46 @@ const createProduct = {
   },
   handler: async (req, res) => {
     console.log("req.body :>> ", req.body);
+    let {
+      categoryName,
+      quantity,
+      productName,
+      productsDescription,
+      regularPrice,
+      salePrice,
+      discount,
+      stock,
+      productSize,
+      review,
+      rating,
+      sku,
+      best_selling,
+      image,
+      gender,
+      hasVariations,
+      variations
+    } = req.body;
+
+
+    // hasVariations = JSON.parse();
+
+    // if (hasVariations && typeof variations === "string") {
+    //   try {
+    //     variations = JSON.parse(variations);
+    //   } catch (error) {
+    //     return res.status(400).json({ message: "Invalid variations format" });
+    //   }
+    // }
+    hasVariations = String(hasVariations).trim().toLowerCase() === "true";
+
+    console.log('String(hasVariations).trim().toLowerCase() === true',   String(hasVariations).trim().toLowerCase() === "true")
+
+    if (hasVariations && typeof variations === "string") { 
+      variations = JSON.parse(variations);
+    } else {
+      variations = [];
+    }
+    console.log('typeof variations', typeof variations)
 
     // check if Product already exists
     const productsNameExits = await Products.findOne({
@@ -87,11 +142,11 @@ const createProduct = {
     //   }
     // }
     // req.body.image = upload_path_array;
-    req.body.best_selling = req.body.best_selling === "1" ? "1" : "0";
+    best_selling = best_selling === "1" ? "1" : "0";
 
-    req.body.discount = parseFloat(req.body.discount);
-    req.body.salePrice = parseFloat(req.body.salePrice);
-    req.body.regularPrice = parseFloat(req.body.regularPrice);
+    discount = parseFloat(discount);
+    salePrice = parseFloat(salePrice);
+    regularPrice = parseFloat(regularPrice);
 
     if (typeof req.body.productSize === "string") {
       req.body.productSize = req.body.productSize
@@ -103,8 +158,46 @@ const createProduct = {
       req.body.discount = 0;
     }
 
-    const products = await new Products(req.body).save();
-    return res.status(httpStatus.CREATED).send(products);
+    const product = new Products({
+      productName,
+      productsDescription,
+      categoryName,
+      image:imagePaths,
+      regularPrice,
+      salePrice,
+      discount: discount || 0,
+      stock,
+      productSize,
+      review: review || "",
+      rating: rating || "0",
+      sku,
+      best_selling: best_selling || "0",
+      gender,
+      quantity,
+      hasVariations
+    });
+    
+
+    if (hasVariations && Array.isArray(variations) && variations.length > 0) {
+      const variationDocs = variations.map(variation => ({
+        productId: product._id,
+        productSize: variation.productSize,
+        regularPrice: variation.regularPrice || 0, 
+        salePrice: variation.salePrice,
+        discount: variation.discount || 0
+      }));
+
+      console.log('variationDocs', variationDocs)
+      const savedVariations = await ProductVariations.insertMany(variationDocs);
+      product.variations = savedVariations.map(variation => variation._id);
+      await product.save();
+    }
+
+    const products = await product.save();
+
+
+    const newProduct  =  await Products.findById(products._id).populate('variations');
+    return res.status(httpStatus.CREATED).send(newProduct);
   },
 };
 
@@ -139,8 +232,36 @@ const getAllProducts = {
       filter.gender = req.query.gender; // Filter by product name
     }
 
-    const products = await Products.find(filter);
+
+    const products = await Products.find(filter).populate('variations');
+
     return res.status(httpStatus.OK).send(products);
+  },
+};
+
+const getLatestProductsByCategory = {
+  validation: {
+    body: Joi.object().keys({
+      categoryName: Joi.string(),
+    }),
+  },
+  handler: async (req, res) => {
+    try {
+      const filter = {};
+
+      if (req.query?.categoryName) {
+        filter.categoryName = req.query.categoryName; // Filter by category name
+      }
+
+      const products = await Products.find(filter)
+        .sort({ createdAt: -1 }) // Sort by createdAt (latest first)
+        .limit(4) // Get only the last 4 created products
+        .populate('variations');
+
+      return res.status(httpStatus.OK).send(products);
+    } catch (error) {
+      return res.status(httpStatus.INTERNAL_SERVER_ERROR).send({ message: 'Error fetching products', error });
+    }
   },
 };
 
@@ -177,7 +298,7 @@ const getTrendingProducts = {
 
       const products = await Products.find()
         .sort({ rating: -1 }) // Sort by highest rating
-        .limit(4); // Get only the top 4 products
+        .limit(4).populate('variations'); // Get only the top 4 products
 
       return res.status(httpStatus.OK).send(products);
     } catch (error) {
@@ -196,7 +317,7 @@ const getProductsByPrice = {
         ? parseFloat(req.query.salePrice)
         : 1999; // Default: ₹1,999
 
-      const products = await Products.find({ salePrice: { $lt: maxPrice } }) // Filter products by salePrice
+      const products = await Products.find({ salePrice: { $lt: maxPrice } }).populate('variations') // Filter products by salePrice
         .sort({ rating: -1 }); // Sort by highest rating
 
       return res.status(httpStatus.OK).json(products);
@@ -217,7 +338,7 @@ const getBestSelling = {
   },
   handler: async (req, res) => {
     try {
-      const bestSellingProducts = await Products.find({ best_selling: "1" });
+      const bestSellingProducts = await Products.find({ best_selling: "1" }).populate('variations');
 
       return res.status(httpStatus.OK).send(bestSellingProducts);
     } catch (error) {
@@ -234,7 +355,7 @@ const getOnSale = {
     try {
       const onSaleProducts = await Products.find({ discount: { $gt: 0 } }) // Get products with discount > 0
         .sort({ discount: -1 }) // Sort by highest discount first
-        .limit(4); // Limit to 4 products
+        .limit(4).populate('variations'); // Limit to 4 products
 
       return res.status(httpStatus.OK).json(onSaleProducts);
     } catch (error) {
@@ -323,6 +444,7 @@ const deleteProduct = {
 
     // delete Products
     await Products.deleteOne({ _id });
+    await ProductVariations.deleteMany({ productId: _id })
     return res
       .status(httpStatus.OK)
       .send({ message: "Products deleted successfully" });
@@ -346,19 +468,21 @@ const multiDeleteProducts = {
     // Fetch products to remove their images
     const products = await Products.find({ _id: { $in: ids } });
 
+    console.log('products', products)
+
     if (!products || products.length === 0) {
       throw new ApiError(httpStatus.NOT_FOUND, "Products not found");
     }
 
-    for (const product of products) {
-      if (Array.isArray(product.image)) {
-        for (const img of product.image) {
-          if (img) await removeFile(img);
-        }
-      } else if (product.image) {
-        await removeFile(product.image);
-      }
-    }
+    // for (const product of products) {
+    //   if (Array.isArray(product.image)) {
+    //     for (const img of product.image) {
+    //       if (img) await removeFile(img);
+    //     }
+    //   } else if (product.image) {
+    //     await removeFile(product.image);
+    //   }
+    // }
 
     // Remove associated images
     // for (const product of products) {
@@ -367,9 +491,11 @@ const multiDeleteProducts = {
     //   }
     // }
 
+    console.log('ids', ids)
+
     // Delete products from DB
     await Products.deleteMany({ _id: { $in: ids } });
-
+    await ProductVariations.deleteMany({ productId: { $in: ids } })
     return res
       .status(httpStatus.OK)
       .send({ message: "Products deleted successfully" });
@@ -386,13 +512,38 @@ const getSingleProduct = {
     const { productId } = req.params;
 
     // Check if product exists
-    const product = await Products.findById(productId);
+    const product = await Products.findById(productId).populate('variations');
 
     if (!product) {
       throw new ApiError(httpStatus.NOT_FOUND, "Product not found");
     }
 
     return res.status(httpStatus.OK).send(product);
+  },
+};
+
+const getProductById = {
+  validation: {
+    params: Joi.object().keys({
+      id: Joi.string().required(), // Validate ID from params
+    }),
+  },
+  handler: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const product = await Products.findById(id).populate('variations');
+
+      if (!product) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Product not found");
+      }
+
+      return res.status(httpStatus.OK).send(product);
+    } catch (error) {
+      return res.status(httpStatus.INTERNAL_SERVER_ERROR).send({
+        message: "Error fetching product",
+        error: error.message,
+      });
+    }
   },
 };
 
@@ -407,4 +558,6 @@ module.exports = {
   getSingleProduct,
   multiDeleteProducts,
   getProductsByPrice,
+  getProductById,
+  getLatestProductsByCategory
 };

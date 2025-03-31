@@ -28,10 +28,10 @@ if (config.env !== 'test') {
 app.use(helmet());
 
 // parse json request body
-app.use(express.json());
+app.use(express.json({limit: '50mb'}));
 
 // parse urlencoded request body
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // sanitize request data
 app.use(xss());
@@ -48,17 +48,17 @@ app.options('*', cors());
 app.use(passport.initialize());
 passport.use('jwt', jwtStrategy);
 
-// app.use((req, res, next) => {
-//   // res.header('Host', '*'); // Allow access from any origin
-//   // res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-//   // res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-//   // res.header('Access-Control-Allow-Credentials', 'true');
-//   // res.header('Access-Control-Expose-Headers', 'Content-Length');   
-//   // req.headers.host = "https://4fd2-2402-a00-162-d066-7949-5f68-f64d-f490.ngrok-free.app"
+app.use((req, res, next) => {
+  res.header('Host', '*'); // Allow access from any origin
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Expose-Headers', 'Content-Length');   
+  req.headers.host = "https://4fd2-2402-a00-162-d066-7949-5f68-f64d-f490.ngrok-free.app"
 
-//   next();
+  next();
 
-// });
+});
 
 app.use(express.static(path.resolve("./public")));
 app.use(express.static(path.resolve("./images")));
@@ -67,9 +67,9 @@ app.use(express.static(path.resolve("./images")));
 app.use(uploader({
   safeFileNames: true,
   preserveExtension: true,
-  limits: {
-    fileSize: 2 * 1024 * 1024,
-  },
+  // limits: {
+  //   fileSize: 100 * 1024 * 1024,
+  // },
   abortOnLimit: true,
   responseOnLimit: 'File size limit has been reached',
   httpErrorCode: 400,
@@ -90,6 +90,12 @@ app.use('/api/v1', routes);
 app.use((req, res, next) => {
   next(new ApiError(httpStatus.NOT_FOUND, 'Not found'));
 });
+
+app.use(cors({
+  origin: 'http://localhost:3001', // Allow your client to make requests
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
 
 // convert error to ApiError, if needed
 app.use(errorConverter);

@@ -6,6 +6,7 @@ const { roles } = require('../config/roles');
 
 const userSchema = mongoose.Schema(
   {
+    user_id: { type: mongoose.Schema.Types.ObjectId, ref: "Register" },
     firstName: {
       type: String,
       required: true,
@@ -23,7 +24,7 @@ const userSchema = mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
+    
       trim: true,
       lowercase: true,
       validate(value) {
@@ -32,55 +33,8 @@ const userSchema = mongoose.Schema(
         }
       },
     },
-    generateOTP:{
-      type:String,
-      required:false,
-    },
-    password: {
-      type: String,
-      required: true,
-      trim: true,
-      minlength: 8,
-      validate(value) {
-        if (!value.match(/\d/) || !value.match(/[a-zA-Z]/)) {
-          throw new Error('Password must contain at least one letter and one number');
-        }
-      },
-      private: true, // used by the toJSON plugin
-    },
-    ConfirmPassword: {
-      type: String,
-      required: true,
-      trim: true,
-      minlength: 8,
-      validate(value) {
-        if (!value.match(/\d/) || !value.match(/[a-zA-Z]/)) {
-          throw new Error('Password must contain at least one letter and one number');
-        }
-      },
-      private: true, // used by the toJSON plugin
-    },
-    // forgotPassword:{
-    //   type:String,
-    //   required:true,
-    //   minlength:8,
-    //   trim:true,
-    //   validate(value) {
-    //     if (!value.match(/\d/) || !value.match(/[a-zA-Z]/)) {
-    //       throw new Error('Password must contain at least one letter and one number');
-    //     }
-    //   },
-    //   private: true, // used by the toJSON plugin
-    // },
-    role: {
-      type: String,
-      enum: roles,
-      default: 'user',
-    },
-    isEmailVerified: {
-      type: Boolean,
-      default: false,
-    },
+
+
     profilePicture: {
       type: String,
     },
@@ -93,8 +47,14 @@ const userSchema = mongoose.Schema(
     address: {
       type: String,
     },
+    address_line2: {
+      type: String,
+    },
     city: {
-      type: String,   
+      type: String,    
+    },
+    state: {
+      type: String,    
     },
     country: {
       type: String,
