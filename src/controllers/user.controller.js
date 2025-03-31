@@ -1,20 +1,19 @@
-const httpStatus = require('http-status');
-const pick = require('../utils/pick');
-const ApiError = require('../utils/ApiError');
-const catchAsync = require('../utils/catchAsync');
-const { userService } = require('../services');
-const Joi = require('joi');
-const { saveFile } = require('../utils/helper');
-const { password } = require('../validations/custom.validation');
-const { Admin, User, Room } = require('../models');
-const { log } = require('../config/logger');
-const mongoose = require('mongoose');
+const httpStatus = require("http-status");
+const pick = require("../utils/pick");
+const ApiError = require("../utils/ApiError");
+const catchAsync = require("../utils/catchAsync");
+const { userService } = require("../services");
+const Joi = require("joi");
+const { saveFile } = require("../utils/helper");
+const { password } = require("../validations/custom.validation");
+const { Admin, User, Room } = require("../models");
+const { log } = require("../config/logger");
+const mongoose = require("mongoose");
 
 // const createUser = catchAsync(async (req, res) => {
 //   const user = await userService.createUser(req.body);
 //   res.status(httpStatus.CREATED).send(user);
 // });
-
 
 // const getUsers = catchAsync(async (req, res) => {
 //   const filter = pick(req.query, ['name', 'role']);
@@ -46,18 +45,16 @@ const deleteTeacher = {
     const user = await Admin.findById(req.params.id);
     if (!user) {
       return res.status(httpStatus.NOT_FOUND).send({
-        message: 'Teacher not found',
+        message: "Teacher not found",
       });
     }
     // console.log("hhjj", req.params.id);
     await Admin.findByIdAndDelete(req.params.id);
     return res.status(httpStatus.OK).send({
-      message: 'Teacher deleted successfully',
+      message: "Teacher deleted successfully",
     });
-  }
+  },
 };
-
-
 
 // const getMe = catchAsync(async (req, res) => {
 //   // const user = await userService.getUserById(req.user.id);
@@ -68,7 +65,7 @@ const deleteTeacher = {
 const getMe = catchAsync(async (req, res) => {
   const user = await userService.getUserById(req.user.id);
   res.send(user);
-})
+});
 
 // const getImage = catchAsync(async (profileImage) => {
 //    await userService.getUserImage(profileImage);
@@ -102,96 +99,94 @@ const createTeacher = {
       year: Joi.string(),
       semester: Joi.string(),
       division: Joi.string(),
-    })
+    }),
   },
   handler: async (req, res) => {
     // console.log("hello", req.body)
-    const userData = await Admin.findOne({ email: req.body.email })
+    const userData = await Admin.findOne({ email: req.body.email });
     if (userData) {
       return res.status(httpStatus.BAD_REQUEST).send({
-        message: 'email already exists',
+        message: "email already exists",
       });
     }
     const body = {
       ...req.body,
-      role: "Teacher"
-    }
+      role: "Teacher",
+    };
     // console.log("hello",req.body)
     const user = await new Admin(body).save();
     return res.status(httpStatus.CREATED).send(user);
-  }
-}
+  },
+};
 
 const updateUserProfile = {
   validation: {
     body: Joi.object().keys({
       firstName: Joi.string(),
       lastName: Joi.string(),
-            phone: Joi.string(),
-          gender: Joi.string(),
+      phone: Joi.string(),
+      gender: Joi.string(),
       birthday: Joi.string(),
-      address:Joi.string(),
-      address_line2:Joi.string(),
+      address: Joi.string(),
+      address_line2: Joi.string(),
 
-      city:Joi.string(),
-      state:Joi.string(),
-      postalCode:Joi.string(),
-
-
-    })
+      city: Joi.string(),
+      state: Joi.string(),
+      postalCode: Joi.string(),
+    }),
   },
   handler: async (req, res) => {
     // if (req.files && req.files?.profileImage) {
     //   const { upload_path } = await saveFile(req.files?.profileImage);
     //   req.body.profileImage = upload_path;
     // }
-const{userId} = req.params;
-    const user = await User.findOne({user_id:userId}, req.body);
-   return  res.send(user);
-  }
-}
+    const { userId } = req.params;
+    const user = await User.findOne({ user_id: userId }, req.body);
+    return res.send(user);
+  },
+};
 
 const createUserProfile = {
   validation: {
     body: Joi.object().keys({
-      user_id:Joi.string(),
+      user_id: Joi.string(),
       firstName: Joi.string(),
       email: Joi.string(),
 
       lastName: Joi.string(),
-            phone: Joi.string(),
-          gender: Joi.string(),
+      phone: Joi.string(),
+      gender: Joi.string(),
       birthday: Joi.string(),
-      address:Joi.string(),
-      address_line2:Joi.string(),
+      address: Joi.string(),
+      address_line2: Joi.string(),
 
-      city:Joi.string(),
-      state:Joi.string(),
-      postalCode:Joi.string(),
-
-
-    })
+      city: Joi.string(),
+      state: Joi.string(),
+      postalCode: Joi.string(),
+    }),
   },
   handler: async (req, res) => {
- 
-
-    const user = await User.create( req.body);
-   return  res.send(user);
-  }
-}
+    const user = await User.create(req.body);
+    return res.send(user);
+  },
+};
 
 const updateTeacher = catchAsync(async (req, res) => {
-
   // console.log(req.body, "req.params.userId")
   // console.log(req.params.id, "req.params.id");
-  const userData = await Admin.findOne({ email: req.body.email, _id: { $ne: req.params.id } })
+  const userData = await Admin.findOne({
+    email: req.body.email,
+    _id: { $ne: req.params.id },
+  });
   console.log(userData, "userData");
   if (userData) {
     return res.status(httpStatus.BAD_REQUEST).send({
-      message: 'email already exists',
+      message: "email already exists",
     });
   }
-  const user = await Admin.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true });
+  const user = await Admin.findOneAndUpdate({ _id: req.params.id }, req.body, {
+    new: true,
+  });
   res.send(user);
 });
 
@@ -224,17 +219,16 @@ const getAllTeacher = {
     // const users = await userService.getAllTeacher();
     const user = await Admin.find();
     return res.status(httpStatus.OK).send(user);
-  }
-}
+  },
+};
 
 const getAllUser = {
   handler: async (req, res) => {
-    const user = await Admin.find({ year: req.user.year, role: "User" })
+    const user = await Admin.find({ year: req.user.year, role: "User" });
     // console.log('user', user)
     return res.status(httpStatus.OK).send(user);
-
-  }
-}
+  },
+};
 
 // const getSearchName = {
 //   handler: async (req, res) => {
@@ -271,21 +265,27 @@ const getAllUser = {
 
 const getSearchName = {
   handler: async (req, res) => {
-
     // console.log(req?.user,"userjjjjjjjjj");
 
     if (!req?.query?.firstName) {
       return res.status(httpStatus.BAD_REQUEST).send({
-        message: 'Record Not Found',
+        message: "Record Not Found",
       });
     }
 
     if (req?.user?.role === "Admin") {
-      const users = await Admin.find({ firstName: req?.query?.firstName }).populate('receiverId').lean();
+      const users = await Admin.find({ firstName: req?.query?.firstName })
+        .populate("receiverId")
+        .lean();
       return res.status(httpStatus.OK).send(users);
     }
 
-    const user = await Admin.find({ firstName: req?.query?.firstName, year: req.user?.year }).populate('receiverId').lean();
+    const user = await Admin.find({
+      firstName: req?.query?.firstName,
+      year: req.user?.year,
+    })
+      .populate("receiverId")
+      .lean();
 
     const room = await Room.find({
       $or: [
@@ -294,51 +294,49 @@ const getSearchName = {
         },
         {
           receiverId: req.user._id,
-        }
-      ]
-    })
+        },
+      ],
+    });
 
     // console.log(room)
-    const existUser = room?.map((item) => item?.receiverId == req.user._id ? String(item?.senderId) : String(item?.receiverId));
+    const existUser = room?.map((item) =>
+      item?.receiverId == req.user._id
+        ? String(item?.senderId)
+        : String(item?.receiverId)
+    );
 
-
-    const result = user?.filter((item) => !existUser.includes(String(item?._id)))
+    const result = user?.filter(
+      (item) => !existUser.includes(String(item?._id))
+    );
     return res.status(httpStatus.OK).send(result);
-  }
-}
-
+  },
+};
 
 const getUserProfile = {
-
   handler: async (req, res) => {
     // console.log("hello", req.body)
 
+    const { userId } = req.params;
 
-    const {userId} = req.params
-
-    console.log("userid",userId);
-    const userData = await User.findOne({user_id:userId}).exec();
+    console.log("userid", userId);
+    const userData = await User.findOne({ user_id: userId }).exec();
     if (!userData) {
       return res.status(httpStatus.BAD_REQUEST).send({
-        message: 'User not found',
+        message: "User not found",
       });
     }
- 
+
     return res.status(httpStatus.OK).send(userData);
-  }
-}
-
-
-
+  },
+};
 
 const updateProfileImage = {
-
   handler: async (req, res) => {
     // console.log("hello", req.body)
 
     if (!req.files?.image || !req.body.user_id) {
       return res.status(httpStatus.BAD_REQUEST).send({
-        message: 'User not found',
+        message: "User not found",
       });
     }
     if (req.files && req.files?.image) {
@@ -346,17 +344,20 @@ const updateProfileImage = {
       req.body.image = upload_path;
     }
 
-    console.log("req.body.image",req.body.image);
-    const userData = await User.findOneAndUpdate({user_id:req.body.user_id,},{profilePicture:req.body.image}).exec();
+    console.log("req.body.image", req.body.image);
+    const userData = await User.findOneAndUpdate(
+      { user_id: req.body.user_id },
+      { profilePicture: req.body.image }
+    ).exec();
     if (!userData) {
       return res.status(httpStatus.BAD_REQUEST).send({
-        message: 'User not found',
+        message: "User not found",
       });
     }
- 
+
     return res.status(httpStatus.OK).send(userData);
-  }
-}
+  },
+};
 
 module.exports = {
   createTeacher,
@@ -365,13 +366,15 @@ module.exports = {
   // updateUser,
   // deleteUser,
   getMe,
- 
+
   // updateMe,
   getAllTeacher,
   updateTeacher,
   createUserProfile,
   deleteTeacher,
   getSearchName,
-  getAllUser
-  ,getUserProfile,updateUserProfile,updateProfileImage
+  getAllUser,
+  getUserProfile,
+  updateUserProfile,
+  updateProfileImage,
 };

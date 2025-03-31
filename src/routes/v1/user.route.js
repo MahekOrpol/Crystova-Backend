@@ -35,7 +35,7 @@ const router = express.Router();
 //   .delete(auth('manageUsers'), validate(userValidation.deleteUser), userController.deleteUser);
 
 
-router.get('/:userId',catchAsync(userController.getUserProfile.handler));
+router.get('get/:userId',catchAsync(userController.getUserProfile.handler));
 router.put('/:userId',catchAsync(userController.updateUserProfile.handler));
 router.post('/create',catchAsync(userController.createUserProfile.handler));
 
