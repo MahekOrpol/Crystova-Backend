@@ -22,6 +22,7 @@ const createOrder = catchAsync(async (req, res) => {
       .optional(),
     discount: Joi.number().optional(),
     order: Joi.string(),
+
   });
 
   const { error, value } = schema.validate(req.body);

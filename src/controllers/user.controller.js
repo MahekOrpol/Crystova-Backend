@@ -119,6 +119,8 @@ const createTeacher = {
   },
 };
 
+// crystova
+
 const updateUserProfile = {
   validation: {
     body: Joi.object().keys({
@@ -176,6 +178,24 @@ const createUserProfile = {
         message: "Profile Created successfully",
         data: user,
       });
+  },
+};
+
+const getUserProfile = {
+  handler: async (req, res) => {
+    // console.log("hello", req.body)
+    
+    const { userId } = req.params;
+    
+    console.log("userid", userId);
+    const userData = await User.findOne({ user_id: userId }).exec();
+    if (!userData) {
+      return res.status(httpStatus.BAD_REQUEST).send({
+        message: "User not found",
+      });
+    }
+    
+    return res.status(httpStatus.OK).send(userData);
   },
 };
 
@@ -317,24 +337,6 @@ const getSearchName = {
       (item) => !existUser.includes(String(item?._id))
     );
     return res.status(httpStatus.OK).send(result);
-  },
-};
-
-const getUserProfile = {
-  handler: async (req, res) => {
-    // console.log("hello", req.body)
-
-    const { userId } = req.params;
-
-    console.log("userid", userId);
-    const userData = await User.findOne({ user_id: userId }).exec();
-    if (!userData) {
-      return res.status(httpStatus.BAD_REQUEST).send({
-        message: "User not found",
-      });
-    }
-
-    return res.status(httpStatus.OK).send(userData);
   },
 };
 

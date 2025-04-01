@@ -15,7 +15,8 @@ const createCategory = {
     console.log("req.body :>> ", req.body);
     
     const { categoryName } = req.body;
-    let categoryImage = req.file ? await saveFile(req.file) : null;
+    console.log('req.file', req.files.categoryImage)
+    let categoryImage = req.files.categoryImage ? await saveFile(req.files.categoryImage) : null;
 
     // Check if category already exists
     const categoryExists = await Category.findOne({ categoryName });
@@ -24,7 +25,7 @@ const createCategory = {
     }
 
     // Create new category
-    const category = new Category({ categoryName, categoryImage });
+    const category = new Category({ categoryName, categoryImage: categoryImage.upload_path});
     await category.save();
 
     return res.status(httpStatus.CREATED).json({
@@ -51,7 +52,7 @@ const updateCategory = {
   handler: async (req, res) => {
     const { _id } = req.params;
     const { categoryName } = req.body;
-    let categoryImage = req.file ? await saveFile(req.file) : null;
+    let categoryImage = req.files.categoryImage ? await saveFile(req.files.categoryImage) : null;
 
     const categoryExists = await Category.findOne({ _id });
     if (!categoryExists) {
@@ -74,7 +75,7 @@ const updateCategory = {
 
     // Update category
     categoryExists.categoryName = categoryName || categoryExists.categoryName;
-    categoryExists.categoryImage = categoryImage || categoryExists.categoryImage;
+    categoryExists.categoryImage = categoryImage.upload_path || categoryExists.categoryImage;
     await categoryExists.save();
 
     return res.status(httpStatus.OK).send(categoryExists);

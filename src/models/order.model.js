@@ -36,6 +36,17 @@ const orderSchema = mongoose.Schema(
     },
     couponCode: {
       type: String,
+      
+    },
+    selectedSize: {
+      type: String,
+      required: true,
+
+    },
+    selectedqty: {
+      type: String,
+      required: true,
+
     },
     status: {
       type: String,

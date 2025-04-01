@@ -53,7 +53,7 @@ const getWishlist = async (req, res) => {
   const { userId } = req.params;
       const wishlistItems = await Wishlist.find({ userId }).populate(
         "productId",
-        "productName salePrice image regularPrice"
+        "productName salePrice image regularPrice productSize"
       );
 
       return res.status(httpStatus.OK).json({
@@ -65,7 +65,7 @@ const getWishlist = async (req, res) => {
 const getAllWishlists = async (req, res) => {
   try {
     const wishlistItems = await Wishlist.find()
-      .populate('productId', 'productName salePrice image categoryName')
+      .populate('productId', 'productName salePrice image categoryName productSize')
       .populate('userId', 'name email')  // ✅ Populate user details
       .lean();
 

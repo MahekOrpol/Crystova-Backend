@@ -31,6 +31,8 @@ const createOrder = catchAsync(async (req, res) => {
     state: Joi.string().optional(),
     zipCode: Joi.string().optional(),
     phoneNumber: Joi.string().optional(),
+    selectedSize:Joi.string().required(),
+    selectedqty:Joi.string().required(),
   });
 
   const { error, value } = schema.validate(req.body, { allowUnknown: true });
@@ -50,6 +52,8 @@ const createOrder = catchAsync(async (req, res) => {
     couponCode: value.couponCode,
     status: value.status || "pending",
     paymentStatus: value.paymentStatus || "Unpaid",
+    selectedSize:value.selectedSize,
+    selectedqty:value.selectedqty
   });
 
   await OrderDetails.updateMany(
@@ -176,7 +180,7 @@ const getUserOrders = catchAsync(async (req, res) => {
   const { userId } = req.params;
 
   const orders = await Order.find({ userId: mongoose.Types.ObjectId(userId) })
-    .populate("userId") // Optional: Populate user data
+    .populate("userId")
     .lean();
 
   if (!orders || orders.length === 0) {

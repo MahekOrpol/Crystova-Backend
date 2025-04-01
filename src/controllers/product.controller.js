@@ -370,31 +370,23 @@ const updateProducts = {
   handler: async (req, res) => {
     const { _id } = req.params;
 
-    const productExits = await Products.findOne({ _id });
-    if (!productExits) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Products not found");
+    let product = await Products.findById(_id).populate("variations");
+    if (!product) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Product not found");
     }
 
-    // check if Products already exists
-    const productsWithNameExits = await Products.findOne({
+    // Check if product name already exists for a different product
+    const productsWithNameExists = await Products.findOne({
       productName: req.body?.productName,
       _id: { $ne: _id },
     }).exec();
-    if (productsWithNameExits) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Products already exists");
+    if (productsWithNameExists) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Product name already exists");
     }
 
-    // if (req.files && req.files?.image) {
-    //   const { upload_path } = await saveFile(req.files?.image);
-    //   req.body.image = upload_path;
-
-    //   // delete old image
-    //   // await removeFile(productExits?.image);
-    // }
-
-    let imagePaths = [];
+    // Process Image Upload
+    let imagePaths = product.image || [];
     if (req.files && req.files.image) {
-      // If single file, wrap in array
       const filesArray = Array.isArray(req.files.image)
         ? req.files.image
         : [req.files.image];
@@ -406,23 +398,83 @@ const updateProducts = {
     }
     req.body.image = imagePaths;
 
-    req.body.discount = parseFloat(req.body.discount);
+    // Convert prices and discount to numbers
+    req.body.discount = parseFloat(req.body.discount) || 0;
     req.body.salePrice = parseFloat(req.body.salePrice);
     req.body.regularPrice = parseFloat(req.body.regularPrice);
 
+    // Convert productSize from string to array
     if (typeof req.body.productSize === "string") {
       req.body.productSize = req.body.productSize
         .split(",")
-        .map((size) => size.trim()); // Convert comma-separated string to array
+        .map((size) => size.trim());
     }
 
-    // update Products
-    const updateProducts = await Products.findOneAndUpdate({ _id }, req.body, {
-      new: true,
-    });
-    return res.status(httpStatus.OK).send(updateProducts);
+    // Handle variations
+    let { hasVariations, variations } = req.body;
+    hasVariations = String(hasVariations).trim().toLowerCase() === "true";
+
+    if (hasVariations && typeof variations === "string") {
+      try {
+        variations = JSON.parse(variations);
+      } catch (error) {
+        return res.status(400).json({ message: "Invalid variations format" });
+      }
+    }
+
+    if (hasVariations && Array.isArray(variations) && variations.length > 0) {
+      const existingVariationIds = product.variations.map((v) => v._id.toString());
+      const newVariationDocs = [];
+
+      for (const variation of variations) {
+        if (variation._id && existingVariationIds.includes(variation._id)) {
+          // Update existing variation
+          await ProductVariations.findByIdAndUpdate(variation._id, variation);
+        } else {
+          // Create new variation
+          newVariationDocs.push({
+            productId: product._id,
+            productSize: variation.productSize,
+            regularPrice: variation.regularPrice || 0,
+            salePrice: variation.salePrice,
+            discount: variation.discount || 0,
+          });
+        }
+      }
+
+      // Insert new variations
+      if (newVariationDocs.length > 0) {
+        const savedVariations = await ProductVariations.insertMany(newVariationDocs);
+        product.variations = [...product.variations, ...savedVariations.map((v) => v._id)];
+      }
+
+      // Remove variations that were deleted
+      const updatedVariationIds = variations.map((v) => v._id).filter(Boolean);
+      const variationsToDelete = product.variations.filter(
+        (v) => !updatedVariationIds.includes(v._id.toString())
+      );
+
+      if (variationsToDelete.length > 0) {
+        await ProductVariations.deleteMany({ _id: { $in: variationsToDelete } });
+        product.variations = product.variations.filter(
+          (v) => updatedVariationIds.includes(v._id.toString())
+        );
+      }
+    } else {
+      // If variations are removed, delete all existing variations
+      await ProductVariations.deleteMany({ productId: product._id });
+      product.variations = [];
+    }
+
+    // Update product details
+    Object.assign(product, req.body);
+    await product.save();
+
+    const updatedProduct = await Products.findById(_id).populate("variations");
+    return res.status(httpStatus.OK).send(updatedProduct);
   },
 };
+
 
 const deleteProduct = {
   handler: async (req, res) => {
