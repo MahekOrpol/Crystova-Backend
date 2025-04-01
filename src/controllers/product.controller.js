@@ -115,10 +115,6 @@ const createProduct = {
       throw new ApiError(httpStatus.BAD_REQUEST, "SKU already exists");
     }
 
-    // if (req.files && req.files?.image) {
-    //   const { upload_path } = await saveFile(req.files?.image);
-    //   req.body.image = upload_path;
-    // }
     let imagePaths = [];
     if (req.files && req.files.image) {
       // If single file, wrap in array
@@ -133,15 +129,6 @@ const createProduct = {
     }
     req.body.image = imagePaths;
 
-    // const upload_path_array = [];
-    // if (req.files) {
-    //   for (let i = 0; i < req.files.length; i++) {
-    //     const element = req.files[i];
-    //     const imageUrl = await uploadOnCloudinary(element.path);
-    //     upload_path_array.push(imageUrl.url);
-    //   }
-    // }
-    // req.body.image = upload_path_array;
     best_selling = best_selling === "1" ? "1" : "0";
 
     discount = parseFloat(discount);
@@ -208,6 +195,7 @@ const getAllProducts = {
       productName: Joi.string(),
       stock: Joi.string(),
       gender: Joi.string(),
+      salePrice:Joi.string()
     }),
   },
   handler: async (req, res) => {
@@ -230,6 +218,9 @@ const getAllProducts = {
     }
     if (req.query?.gender) {
       filter.gender = req.query.gender; // Filter by product name
+    }
+    if (req.query?.salePrice) {
+      filter.salePrice = req.query.salePrice; // Filter by product name
     }
 
 

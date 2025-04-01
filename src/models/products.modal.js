@@ -46,16 +46,7 @@ const productsSchema = mongoose.Schema(
       type: mongoose.Schema.Types.Decimal128,
       default: 0,
     },
-    // prices: [
-    //     {
-    //       salePrice: {
-    //         type: Number,
-    //       },
-    //       regularPrice: {
-    //         type: Number,
-    //       },
-    //     },
-    //   ],
+
     image: {
       type: [String],
       default: [],
