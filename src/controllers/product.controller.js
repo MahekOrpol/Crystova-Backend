@@ -81,15 +81,6 @@ const createProduct = {
     } = req.body;
 
 
-    // hasVariations = JSON.parse();
-
-    // if (hasVariations && typeof variations === "string") {
-    //   try {
-    //     variations = JSON.parse(variations);
-    //   } catch (error) {
-    //     return res.status(400).json({ message: "Invalid variations format" });
-    //   }
-    // }
     hasVariations = String(hasVariations).trim().toLowerCase() === "true";
 
     console.log('String(hasVariations).trim().toLowerCase() === true',   String(hasVariations).trim().toLowerCase() === "true")
