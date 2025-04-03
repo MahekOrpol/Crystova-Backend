@@ -214,7 +214,6 @@ const getAllProducts = {
       filter.salePrice = req.query.salePrice; // Filter by product name
     }
 
-
     const products = await Products.find(filter).populate('variations');
 
     return res.status(httpStatus.OK).send(products);

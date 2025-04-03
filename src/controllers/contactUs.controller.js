@@ -38,8 +38,8 @@ const createContactUs = {
     body: Joi.object().keys({
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),
-      email: Joi.string().required(),
       phone: Joi.string().required(),
+      email: Joi.string().required(),
       message: Joi.string().required(),
     }),
   },

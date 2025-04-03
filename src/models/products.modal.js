@@ -71,10 +71,13 @@ const productsSchema = mongoose.Schema(
       default: [], // Default value as an empty array
     },
     gender: {
-      type: String
-   },
-   hasVariations: { type: Boolean, default: false },
-   variations: [{ type: mongoose.Schema.Types.ObjectId, ref: "ProductVariation" }],
+      type: String,
+      default: "",
+    },
+    hasVariations: { type: Boolean, default: false },
+    variations: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "ProductVariation" },
+    ],
   },
   {
     timestamps: true,
@@ -94,14 +97,18 @@ productsSchema.pre("findOneAndDelete", async function (next) {
 });
 
 // Middleware for direct `deleteOne`
-productsSchema.pre("deleteOne", { document: true, query: false }, async function (next) {
-  try {
-    await ProductVariations.deleteMany({ productId: this._id });
-    next();
-  } catch (error) {
-    next(error);
+productsSchema.pre(
+  "deleteOne",
+  { document: true, query: false },
+  async function (next) {
+    try {
+      await ProductVariations.deleteMany({ productId: this._id });
+      next();
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // Middleware for multiple product deletion
 // productsSchema.pre("deleteMany", async function (next) {

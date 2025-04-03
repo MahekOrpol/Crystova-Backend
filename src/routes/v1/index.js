@@ -3,7 +3,6 @@ const userRoute = require("./user.route");
 const adminRoute = require("./admin.route");
 const authRoute = require("./auth.route");
 const gameRoute = require("./game.route");
-const contactRoutes = require("./contact.route");
 const aboutUsRoute = require("./aboutUs.route");
 const assignmentsRoute = require("./assignments.route");
 const toDosRoute = require("./todos.route");
@@ -22,7 +21,7 @@ const categoryRoute=require('./category.route')
 const orderDetailsRoute=require('./orderDetails.route')
 const orderRoute=require('./order.route')
 const paymentRoute=require('./payment.route')
-
+const contactRoutes = require('./contactUs.route')
 const router = express.Router();
 
 const defaultRoutes = [
