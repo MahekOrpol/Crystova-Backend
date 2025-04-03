@@ -23,7 +23,8 @@ const orderRoute=require('./order.route')
 const paymentRoute=require('./payment.route')
 const contactRoutes = require('./contactUs.route')
 const router = express.Router();
-
+const priceFilterRoute=require('./priceFilter.route');
+const customJewelsRoute = require("./customJewels.route");
 const defaultRoutes = [
   {
     path: "/auth",
@@ -117,6 +118,14 @@ const defaultRoutes = [
     path: '/payment',
     route: paymentRoute,
   },
+  {
+    path:'/price-filter',
+    route: priceFilterRoute,
+  },
+  {
+    path:'/custom-jewels',
+    route: customJewelsRoute,
+  }
 ];
 
 defaultRoutes.forEach((route) => {
