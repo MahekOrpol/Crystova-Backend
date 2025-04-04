@@ -23,5 +23,5 @@ module.exports.OrderDetails=require('./orderDetails.model')
 module.exports.Order=require('./order.model')
 module.exports.Counter=require('./counter.model')
 module.exports.ProductVariations=require('./productVariation.model')
-
-
+module.exports.CustomJewels=require('./customJewels.model')
+module.exports.PriceFilter=require('./priceFilter.model')

@@ -3,6 +3,7 @@ const { CustomJewels } = require("../models");
 const httpStatus = require("http-status");
 const { saveFile } = require("../utils/helper");
 const ApiError = require("../utils/ApiError");
+const { sendCustomJewelEmail } = require("../services/email.service");
 
 const createCustomJewel = {
     validation: {
@@ -36,10 +37,29 @@ const createCustomJewel = {
         
             // Create new CustomJewels
             const customJewels = await CustomJewels.create({ 
-               name,
+                name,
                 file: filePath,email,mobile,metal,budget,message
             });
-        
+            // Send confirmation email to the customer
+            try {
+                await sendCustomJewelEmail({
+                    to: email,
+                    data: {
+                        name,
+                        email,
+                        mobile,
+                        type: req.body.type, // You weren't using this in the email but it's in your validation
+                        metal,
+                        budget,
+                        message,
+                        filePath // Include the file path if you want to reference it in the email
+                    }
+                });
+            } catch (emailError) {
+                console.error('Email sending failed:', emailError);
+                // Continue even if email fails
+            }
+            
             return res.status(httpStatus.CREATED).json({
                 success: true,
                 message: "Custom jewelry created successfully",
@@ -55,6 +75,10 @@ const createCustomJewel = {
             } else if (error.name === 'ValidationError') {
                 statusCode = httpStatus.BAD_REQUEST;
                 errorMessage = error.message;
+            } else if (error.code === 'EAUTH' || error.code === 'EENVELOPE') {
+                // Handle email sending errors specifically
+                statusCode = httpStatus.INTERNAL_SERVER_ERROR;
+                errorMessage = "Custom jewelry created, but we couldn't send the confirmation email";
             }
             
             return res.status(statusCode).json({

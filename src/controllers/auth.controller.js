@@ -3,7 +3,7 @@ const catchAsync = require('../utils/catchAsync');
 const { authService, userService, tokenService, emailService } = require('../services');
 const Joi = require('joi');
 const { password } = require('../validations/custom.validation');
-const { User, Admin, Token } = require('../models');
+const { User, Register, Token } = require('../models');
 const ApiError = require('../utils/ApiError');
 const auth = require('../middlewares/auth');
 const { jwt } = require('../config/config');
@@ -88,8 +88,8 @@ const sendOtp = {
     }),
   },
   handler: async (req, res) => {
-    const admin = await Admin.findOne({ email: req.body.email });
-    if (!admin) {
+    const register = await Register.findOne({ email: req.body.email });
+    if (!register) {
       return res.status(httpStatus.BAD_REQUEST).send({
         message: 'email not found',
       });
@@ -110,11 +110,11 @@ const sendOtp = {
     console.log('Random OTP:', randomOTP);
 
 
-    const newAdmin = await Admin.findOneAndUpdate({ email: req.body.email }, { generateOTP: randomOTP }, { new: true, upsert: true });
+    const newRegister = await Register.findOneAndUpdate({ email: req.body.email }, { generateOTP: randomOTP }, { new: true, upsert: true });
 
     await emailService.sendOtpOnEmail(req.body.email, randomOTP);
 
-    return res.status(httpStatus.OK).send(newAdmin);
+    return res.status(httpStatus.OK).send(newRegister);
   }
 };
 
