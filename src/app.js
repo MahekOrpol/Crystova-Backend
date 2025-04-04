@@ -28,7 +28,7 @@ if (config.env !== 'test') {
 app.use(helmet());
 
 // parse json request body
-app.use(express.json({limit: '50mb'}));
+app.use(express.json({ limit: '50mb' }));
 
 // parse urlencoded request body
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -53,7 +53,7 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Expose-Headers', 'Content-Length');   
+  res.header('Access-Control-Expose-Headers', 'Content-Length');
   req.headers.host = "https://4fd2-2402-a00-162-d066-7949-5f68-f64d-f490.ngrok-free.app"
 
   next();
@@ -70,6 +70,8 @@ app.use(uploader({
   // limits: {
   //   fileSize: 100 * 1024 * 1024,
   // },
+  useTempFiles: true,
+  tempFileDir: '/tmp/uploads',
   abortOnLimit: true,
   responseOnLimit: 'File size limit has been reached',
   httpErrorCode: 400,
