@@ -361,11 +361,12 @@ const updateProducts = {
       productName: req.body?.productName,
       _id: { $ne: _id },
     }).exec();
+
     if (productsWithNameExists) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Product name already exists");
     }
 
-    // Process Image Upload
+    // Process image uploads
     let imagePaths = product.image || [];
     if (req.files && req.files.image) {
       const filesArray = Array.isArray(req.files.image)
@@ -379,12 +380,12 @@ const updateProducts = {
     }
     req.body.image = imagePaths;
 
-    // Convert prices and discount to numbers
+    // Type conversions
     req.body.discount = parseFloat(req.body.discount) || 0;
     req.body.salePrice = parseFloat(req.body.salePrice);
     req.body.regularPrice = parseFloat(req.body.regularPrice);
 
-    // Convert productSize from string to array
+    // Convert productSize string to array
     if (typeof req.body.productSize === "string") {
       req.body.productSize = req.body.productSize
         .split(",")
@@ -395,66 +396,105 @@ const updateProducts = {
     let { hasVariations, variations } = req.body;
     hasVariations = String(hasVariations).trim().toLowerCase() === "true";
 
-    if (hasVariations && typeof variations === "string") {
-      try {
-        variations = JSON.parse(variations);
-      } catch (error) {
-        return res.status(400).json({ message: "Invalid variations format" });
+    if (hasVariations) {
+      if (typeof variations === "string") {
+        try {
+          variations = JSON.parse(variations);
+        } catch (error) {
+          return res.status(400).json({ message: "Invalid variations format" });
+        }
       }
-    }
 
-    if (hasVariations && Array.isArray(variations) && variations.length > 0) {
+      if (!Array.isArray(variations)) {
+        return res.status(400).json({ message: "Variations must be an array" });
+      }
+
+      // Validate variation fields
+      for (const variation of variations) {
+        if (
+          !variation.productSize ||
+          variation.salePrice == null ||
+          variation.regularPrice == null
+        ) {
+          return res.status(400).json({ message: "Variation missing required fields" });
+        }
+      }
+
+      req.body.variations = variations;
+
+      // Track variations
       const existingVariationIds = product.variations.map((v) => v._id.toString());
       const newVariationDocs = [];
 
       for (const variation of variations) {
         if (variation._id && existingVariationIds.includes(variation._id)) {
-          // Update existing variation
           await ProductVariations.findByIdAndUpdate(variation._id, variation);
         } else {
-          // Create new variation
           newVariationDocs.push({
             productId: product._id,
             productSize: variation.productSize,
-            regularPrice: variation.regularPrice || 0,
-            salePrice: variation.salePrice,
-            discount: variation.discount || 0,
+            regularPrice: parseFloat(variation.regularPrice) || 0,
+            salePrice: parseFloat(variation.salePrice) || 0,
+            discount: parseFloat(variation.discount) || 0,
           });
         }
       }
 
-      // Insert new variations
-      if (newVariationDocs.length > 0) {
-        const savedVariations = await ProductVariations.insertMany(newVariationDocs);
-        product.variations = [...product.variations, ...savedVariations.map((v) => v._id)];
-      }
+      // Save new variations
+      const savedVariations = await ProductVariations.insertMany(newVariationDocs);
+      const newVariationIds = savedVariations.map((v) => v._id.toString());
+      const existingVariationIdsToKeep = variations
+        .map((v) => v._id)
+        .filter((id) => id && existingVariationIds.includes(id));
 
-      // Remove variations that were deleted
-      const updatedVariationIds = variations.map((v) => v._id).filter(Boolean);
-      const variationsToDelete = product.variations.filter(
-        (v) => !updatedVariationIds.includes(v._id.toString())
+      const updatedVariationIds = [...existingVariationIdsToKeep, ...newVariationIds];
+
+      // Remove deleted variations
+      const variationsToDelete = existingVariationIds.filter(
+        (id) => !updatedVariationIds.includes(id)
       );
 
       if (variationsToDelete.length > 0) {
         await ProductVariations.deleteMany({ _id: { $in: variationsToDelete } });
-        product.variations = product.variations.filter(
-          (v) => updatedVariationIds.includes(v._id.toString())
-        );
       }
+
+      product.variations = updatedVariationIds;
     } else {
-      // If variations are removed, delete all existing variations
+      // No variations - delete all
       await ProductVariations.deleteMany({ productId: product._id });
       product.variations = [];
     }
 
-    // Update product details
-    Object.assign(product, req.body);
+    // Update allowed fields only
+    const fieldsToUpdate = [
+      "productName",
+      "productsDescription",
+      "regularPrice",
+      "salePrice",
+      "stock",
+      "gender",
+      "discount",
+      "best_selling",
+      "sku",
+      "quantity",
+      "categoryName",
+      "productSize",
+      "image"
+    ];
+
+    fieldsToUpdate.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        product[field] = req.body[field];
+      }
+    });
+
     await product.save();
 
     const updatedProduct = await Products.findById(_id).populate("variations");
     return res.status(httpStatus.OK).send(updatedProduct);
   },
 };
+
 
 
 const deleteProduct = {
