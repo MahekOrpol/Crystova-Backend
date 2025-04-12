@@ -82,23 +82,58 @@ const updateCategory = {
   },
 };
 
+// const deleteCategory = {
+//   handler: async (req, res) => {
+//     const { _id } = req.params;
+
+//     const categoryExists = await Category.findOne({ _id });
+//     if (!categoryExists) {
+//       throw new ApiError(httpStatus.BAD_REQUEST, "Category not found");
+//     }
+
+//     // Remove image if exists
+//     if (categoryExists.categoryImage) {
+//       await removeFile(categoryExists.categoryImage);
+//     }
+
+//     // Delete category
+//     await Category.deleteOne({ _id });
+//     return res.status(httpStatus.OK).send({ message: "Category deleted successfully" });
+//   },
+// };
+
 const deleteCategory = {
   handler: async (req, res) => {
-    const { _id } = req.params;
+    try {
+      const { _id } = req.params;
 
-    const categoryExists = await Category.findOne({ _id });
-    if (!categoryExists) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Category not found");
+      if (!_id) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Category ID is required");
+      }
+
+      const category = await Category.findById(_id);
+      if (!category) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Category not found");
+      }
+
+      // Remove image if it exists
+      if (category.categoryImage) {
+        await removeFile(category.categoryImage);
+      }
+
+      await Category.findByIdAndDelete(_id);
+
+      return res.status(httpStatus.OK).json({
+        success: true,
+        message: "Category deleted successfully",
+      });
+    } catch (error) {
+      console.error("Delete category error:", error);
+      return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: "Internal Server Error",
+      });
     }
-
-    // Remove image if exists
-    if (categoryExists.categoryImage) {
-      await removeFile(categoryExists.categoryImage);
-    }
-
-    // Delete category
-    await Category.deleteOne({ _id });
-    return res.status(httpStatus.OK).send({ message: "Category deleted successfully" });
   },
 };
 
