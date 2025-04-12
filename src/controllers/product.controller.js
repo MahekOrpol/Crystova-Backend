@@ -211,8 +211,12 @@ const getAllProducts = {
       filter.gender = req.query.gender; // Filter by product name
     }
     if (req.query?.salePrice) {
-      filter.salePrice = req.query.salePrice; // Filter by product name
+      const maxPrice = parseFloat(req.query.salePrice);
+      if (!isNaN(maxPrice)) {
+        filter.salePrice = { $gte: 0, $lte: maxPrice };
+      }
     }
+   
 
     const products = await Products.find(filter).populate('variations');
 
