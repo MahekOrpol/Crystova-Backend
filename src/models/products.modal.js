@@ -68,7 +68,7 @@ const productsSchema = mongoose.Schema(
     // },
     productSize: {
       type: [String], // Changed from String to an array of strings
-      default: [], // Default value as an empty array
+      default: [""], // Default value as an empty array
     },
     gender: {
       type: String,

@@ -12,14 +12,14 @@ const orderSchema = mongoose.Schema(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "ProductVariation",
-        default: null, 
-      }
+        default: null,
+      },
     ],
-    
+
     orderId: {
       type: String,
       ref: "Order", // Refers to Products schema
-      default: 0, 
+      default: 0,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -40,7 +40,11 @@ const orderSchema = mongoose.Schema(
       type: mongoose.Schema.Types.Decimal128,
       default: 0,
     },
-
+    selectedqty: {
+      type: String,
+      required: true,
+      default: 1,
+    },
     // totalPrice: {
     //   type: String,
     // },

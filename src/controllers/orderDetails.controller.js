@@ -22,7 +22,7 @@ const createOrder = catchAsync(async (req, res) => {
       .optional(),
     discount: Joi.number().optional(),
     order: Joi.string(),
-
+    selectedqty: Joi.string(),
   });
 
   const { error, value } = schema.validate(req.body);
@@ -66,6 +66,8 @@ const updateOrderStatus = catchAsync(async (req, res) => {
       Joi.string()
     ),
     discount: Joi.number(),
+    selectedqty: Joi.string(),
+
   });
 
   const { error, value } = schema.validate(req.body);
@@ -127,7 +129,7 @@ const deleteOrderDetails = catchAsync(async (req, res) => {
   const { orderId } = req.params;
 
   const order = await OrderDetails.findByIdAndDelete(orderId);
-  
+
   if (!order) {
     throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
   }
@@ -143,5 +145,5 @@ module.exports = {
   updateOrderStatus,
   getOrderById,
   getAllOrders,
-  deleteOrderDetails
+  deleteOrderDetails,
 };

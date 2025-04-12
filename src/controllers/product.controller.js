@@ -236,7 +236,7 @@ const getLatestProductsByCategory = {
 
       const products = await Products.find(filter)
         .sort({ createdAt: -1 }) // Sort by createdAt (latest first)
-        .limit(4) // Get only the last 4 created products
+        
         .populate('variations');
 
       return res.status(httpStatus.OK).send(products);
