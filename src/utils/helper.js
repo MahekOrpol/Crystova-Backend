@@ -24,18 +24,27 @@ const saveFile = (files) => {
 
 
 const removeFile = (file_name) => {
-    let fileUploadPath = config.fileUploadPath;
-    return new Promise(async (resolve, reject) => {
-        fileUploadPath = fileUploadPath + file_name;
-        fs.unlink(fileUploadPath, async (err) => {
+    let fileUploadPath = config.fileUploadPath + file_name;
+    return new Promise((resolve, reject) => {
+        fs.unlink(fileUploadPath, (err) => {
             if (err) {
-                reject(err);
+                if (err.code === 'ENOENT') {
+                    // File doesn't exist, log and resolve gracefully
+                    console.warn("⚠️ File not found, skipping deletion:", fileUploadPath);
+                    resolve(false);
+                } else {
+                    // Other errors, reject
+                    console.error("❌ Error deleting file:", err);
+                    reject(err);
+                }
             } else {
+                console.log("✅ File deleted:", fileUploadPath);
                 resolve(true);
             }
         });
-    })
-}
+    });
+};
+
 
 
 module.exports = {
