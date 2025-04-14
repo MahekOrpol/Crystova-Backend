@@ -52,7 +52,8 @@ const updateCategory = {
   handler: async (req, res) => {
     const { _id } = req.params;
     const { categoryName } = req.body;
-    let categoryImage = req.files.categoryImage ? await saveFile(req.files.categoryImage) : null;
+
+    let categoryImage = req.files && req.files.categoryImage ? await saveFile(req.files.categoryImage) : null;
 
     const categoryExists = await Category.findOne({ _id });
     if (!categoryExists) {
@@ -75,12 +76,14 @@ const updateCategory = {
 
     // Update category
     categoryExists.categoryName = categoryName || categoryExists.categoryName;
-    categoryExists.categoryImage = categoryImage.upload_path || categoryExists.categoryImage;
+    categoryExists.categoryImage = categoryImage?.upload_path || categoryExists.categoryImage;
+
     await categoryExists.save();
 
     return res.status(httpStatus.OK).send(categoryExists);
   },
 };
+
 
 // const deleteCategory = {
 //   handler: async (req, res) => {
