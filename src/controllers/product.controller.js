@@ -235,7 +235,7 @@ const getLatestProductsByCategory = {
       const filter = {};
 
       if (req.query?.categoryName) {
-        filter.categoryName = req.query.categoryName; // Filter by category name
+        filter.categoryName = req.query.categoryName;  
       }
 
       const products = await Products.find(filter)
