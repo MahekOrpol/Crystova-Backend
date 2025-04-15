@@ -283,7 +283,7 @@ const getTrendingProducts = {
 
       const products = await Products.find()
         .sort({ rating: -1 }) // Sort by highest rating
-        .limit(4).populate('variations'); // Get only the top 4 products
+        // .limit(4).populate('variations'); // Get only the top 4 products
 
       return res.status(httpStatus.OK).send(products);
     } catch (error) {
@@ -340,7 +340,7 @@ const getOnSale = {
     try {
       const onSaleProducts = await Products.find({ discount: { $gt: 0 } }) // Get products with discount > 0
         .sort({ discount: -1 }) // Sort by highest discount first
-        .limit(4).populate('variations'); // Limit to 4 products
+        // .limit(4).populate('variations'); // Limit to 4 products
 
       return res.status(httpStatus.OK).json(onSaleProducts);
     } catch (error) {
