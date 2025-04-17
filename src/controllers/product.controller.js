@@ -399,6 +399,7 @@ const updateProducts = {
     // Handle variations
     let { hasVariations, variations } = req.body;
     hasVariations = String(hasVariations).trim().toLowerCase() === "true";
+    console.log('hasVariations :>> ', hasVariations);
 
     if (hasVariations) {
       if (typeof variations === "string") {
@@ -426,7 +427,6 @@ const updateProducts = {
 
       req.body.variations = variations;
 
-      // Track variations
       const existingVariationIds = product.variations.map((v) => v._id.toString());
       const newVariationDocs = [];
 
@@ -444,7 +444,6 @@ const updateProducts = {
         }
       }
 
-      // Save new variations
       const savedVariations = await ProductVariations.insertMany(newVariationDocs);
       const newVariationIds = savedVariations.map((v) => v._id.toString());
       const existingVariationIdsToKeep = variations
@@ -453,7 +452,6 @@ const updateProducts = {
 
       const updatedVariationIds = [...existingVariationIdsToKeep, ...newVariationIds];
 
-      // Remove deleted variations
       const variationsToDelete = existingVariationIds.filter(
         (id) => !updatedVariationIds.includes(id)
       );
@@ -464,7 +462,6 @@ const updateProducts = {
 
       product.variations = updatedVariationIds;
     } else {
-      // No variations - delete all
       await ProductVariations.deleteMany({ productId: product._id });
       product.variations = [];
     }
@@ -492,13 +489,16 @@ const updateProducts = {
       }
     });
 
+    // ✅ Fix: Update hasVariations field
+    product.hasVariations = hasVariations;
+
     await product.save();
 
     const updatedProduct = await Products.findById(_id).populate("variations");
+    console.log('updatedProduct :>> ', updatedProduct);
     return res.status(httpStatus.OK).send(updatedProduct);
   },
 };
-
 
 
 const deleteProduct = {
