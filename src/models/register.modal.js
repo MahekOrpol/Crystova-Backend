@@ -15,7 +15,7 @@ const registerSchema = mongoose.Schema(
    
     phone : {
       type: String,
-      required: true,
+      required: false,
       minlength:9,  
       maxlength:10
     },
@@ -34,7 +34,7 @@ const registerSchema = mongoose.Schema(
   
     password: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
       minlength: 8,
      
@@ -42,7 +42,7 @@ const registerSchema = mongoose.Schema(
     },
     ConfirmPassword: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
       minlength: 8,
       

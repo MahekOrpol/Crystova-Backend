@@ -20,4 +20,5 @@ module.exports.orderController=require('./order.controller')
 module.exports.paymentController=require('./payment.controller')
 module.exports.priceFilterController=require('./priceFilter.controller');
 module.exports.customJewelsController=require('./customJewels.controller');
+module.exports.videosController=require('./videos.controller');
 

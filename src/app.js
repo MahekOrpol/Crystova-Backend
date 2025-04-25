@@ -15,7 +15,6 @@ const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
 const uploader = require('express-fileupload');
 const path = require('path');
-const { OAuth2Client } = require('google-auth-library');
 
 
 const app = express();
@@ -65,7 +64,7 @@ app.use((req, res, next) => {
 // app.use(express.static(path.resolve("./images")));
 
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
-// app.use('/videos', express.static(path.join(__dirname, 'public/videos')));
+app.use('/videos', express.static(path.join(__dirname, 'public/videos')));
 
 
 app.use(uploader({
@@ -97,32 +96,6 @@ app.use('/api/v1', routes);
 app.use((req, res, next) => {
   next(new ApiError(httpStatus.NOT_FOUND, 'Not found'));
 });
-
-const client = new OAuth2Client('1022906991298-dp12dcl5f3uo96r4l75f10j8jk8pd7on.apps.googleusercontent.com');
-
-app.post('/api/auth/google-login', async (req, res) => {
-  const { idToken } = req.body;
-
-  try {
-    const ticket = await client.verifyIdToken({
-      idToken,
-      audience: '1022906991298-dp12dcl5f3uo96r4l75f10j8jk8pd7on.apps.googleusercontent.com',
-    });
-
-    const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
-
-    // Check if user exists in DB, else create new user
-    // For now, respond with user data
-    res.status(200).json({
-      success: true,
-      user: { email, name, picture },
-    });
-  } catch (error) {
-    res.status(401).json({ success: false, message: 'Invalid ID token' });
-  }
-});
-
 
 app.use(cors({
   origin: 'http://localhost:3001', // Allow your client to make requests
