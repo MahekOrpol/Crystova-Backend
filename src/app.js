@@ -64,8 +64,6 @@ app.use((req, res, next) => {
 // app.use(express.static(path.resolve("./images")));
 
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
-app.use('/videos', express.static(path.join(__dirname, 'public/videos')));
-
 
 app.use(uploader({
   safeFileNames: true,
@@ -90,7 +88,6 @@ if (config.env === 'production') {
 
 // v1 api routes
 app.use('/api/v1', routes);
-
 
 // send back a 404 error for any unknown api request
 app.use((req, res, next) => {

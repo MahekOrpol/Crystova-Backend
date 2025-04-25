@@ -18,7 +18,6 @@ const {
 } = require("../services/token.service");
 const { token } = require("morgan");
 const bcrypt = require("bcryptjs");
-const { OAuth2Client } = require("google-auth-library");
 
 const register = {
   validation: {
@@ -83,10 +82,11 @@ const register = {
 //     const { email, password } = req.body;
 
 //     const user = await Register.findOne({ email });
-//     console.log(user);
+//     console.log(user); 
 
 //     const isMatch = await user.isPasswordMatch(password);
 // console.log("Password match:", isMatch); // This should be true
+
 
 //     // if (!user || !(await user.isPasswordMatch(password))) {
 //     //   throw new ApiError(
@@ -115,63 +115,56 @@ const login = {
   },
   handler: async (req, res) => {
     try {
-      const { email, password } = req.body;
+        const { email, password } = req.body;
 
-      // Find user by email
-      const user = await Register.findOne({ email });
+        // Find user by email
+        const user = await Register.findOne({ email });
 
-      if (!user) {
-        return res
-          .status(httpStatus.UNAUTHORIZED)
-          .json({ message: "Invalid email or password" });
-      }
+        if (!user) {
+            return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid email or password" });
+        }
 
-      // Check password match (CORRECTED)
-      const isMatch = await user.isPasswordMatch(password); // ✅ Fixed
-      console.log("Password match:", isMatch); // Debugging log
+        // Check password match (CORRECTED)
+        const isMatch = await user.isPasswordMatch(password); // ✅ Fixed
+        console.log("Password match:", isMatch); // Debugging log
 
-      if (!isMatch) {
-        return res
-          .status(httpStatus.UNAUTHORIZED)
-          .json({ message: "Invalid email or password" });
-      }
+        if (!isMatch) {
+            return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid email or password" });
+        }
 
-      // Generate token
-      const token = await tokenService.generateAuthTokens(user);
-      return res.status(httpStatus.OK).json({ token, user });
+        // Generate token
+        const token = await tokenService.generateAuthTokens(user);
+        return res.status(httpStatus.OK).json({ token, user });
+
     } catch (error) {
-      console.error("Login Error:", error);
-      return res
-        .status(httpStatus.INTERNAL_SERVER_ERROR)
-        .json({ message: "Internal server error" });
+        console.error("Login Error:", error);
+        return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
     }
-  },
+}
+
 };
 
 const getAllUser = {
   handler: async (req, res) => {
-    const user = await Register.find();
+    const user = await Register.find()
     // console.log('user', user)
     return res.status(httpStatus.OK).send(user);
-  },
-};
+
+  }
+}
 
 const getUserById = {
   handler: async (req, res) => {
-    try {
-      console.log(req.params);
-
-      const user = await Register.findById(req.params.id);
-      if (!user)
-        return res
-          .status(httpStatus.NOT_FOUND)
-          .json({ error: "user not found" });
-      res.status(httpStatus.OK).json(user);
-    } catch (err) {
-      res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ error: err.message });
-    }
-  },
-};
+  try {
+    console.log(req.params);
+    
+    const user = await Register.findById(req.params.id);
+    if (!user) return res.status(httpStatus.NOT_FOUND).json({ error: 'user not found' });
+    res.status(httpStatus.OK).json(user);
+  } catch (err) {
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ error: err.message });
+  }
+}};
 
 const logout = catchAsync(async (req, res) => {
   await authService.logout(req.body.refreshToken);
@@ -301,7 +294,7 @@ const forgotPassword = {
         .send({ success: true, message: "Password reset successfully", admin });
     }
     admin.password = password;
-    admin.confirmPassword = "-";
+    admin.confirmPassword = '-';
     await admin.save();
   },
 };
@@ -310,42 +303,6 @@ const verifyEmail = catchAsync(async (req, res) => {
   await authService.verifyEmail(req.query.token);
   res.status(httpStatus.NO_CONTENT).send();
 });
-const client = new OAuth2Client(
-  "1022906991298-dp12dcl5f3uo96r4l75f10j8jk8pd7on.apps.googleusercontent.com"
-);
-const googleLogin = async (req, res) => {
-  const { idToken } = req.body;
-
-  try {
-    const ticket = await client.verifyIdToken({
-      idToken,
-      audience:
-        "1022906991298-dp12dcl5f3uo96r4l75f10j8jk8pd7on.apps.googleusercontent.com",
-    });
-
-    const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
-    const userDetails = await Register.findOne({ email: email });
-    if (userDetails) {
-      const token = await tokenService.generateAuthTokens(userDetails);
-      res.status(200).json({
-        success: true,
-        user: userDetails,
-        token
-      });
-    } else {
-      const userDetails = await Register.create({ name: name, email: email });
-      const token = await tokenService.generateAuthTokens(userDetails);
-      res.status(200).json({
-        success: true,
-        user: userDetails,token
-      });
-    }
-  } catch (error) {
-    console.log("error :>> ", error);
-    res.status(401).json({ success: false, message: `ERROR ${error}` });
-  }
-};
 
 module.exports = {
   register,
@@ -361,5 +318,4 @@ module.exports = {
   forgotPassword,
   getAllUser,
   getUserById,
-  googleLogin,
 };
