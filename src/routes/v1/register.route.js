@@ -12,4 +12,6 @@ router.post('/login', validate(registerController.login.validation), catchAsync(
 router.get('/get', catchAsync(registerController.getAllUser.handler));
 
 router.get('/single/:id', catchAsync(registerController.getUserById.handler));
+
+router.post('/auth/google-login', registerController.googleLogin);
 module.exports = router;

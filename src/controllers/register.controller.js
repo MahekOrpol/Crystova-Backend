@@ -304,6 +304,43 @@ const verifyEmail = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send();
 });
 
+const client = new OAuth2Client(
+  "1022906991298-dp12dcl5f3uo96r4l75f10j8jk8pd7on.apps.googleusercontent.com"
+);
+const googleLogin = async (req, res) => {
+  const { idToken } = req.body;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience:
+        "1022906991298-dp12dcl5f3uo96r4l75f10j8jk8pd7on.apps.googleusercontent.com",
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+    const userDetails = await Register.findOne({ email: email });
+    if (userDetails) {
+      const token = await tokenService.generateAuthTokens(userDetails);
+      res.status(200).json({
+        success: true,
+        user: userDetails,
+        token
+      });
+    } else {
+      const userDetails = await Register.create({ name: name, email: email });
+      const token = await tokenService.generateAuthTokens(userDetails);
+      res.status(200).json({
+        success: true,
+        user: userDetails,token
+      });
+    }
+  } catch (error) {
+    console.log("error :>> ", error);
+    res.status(401).json({ success: false, message: `ERROR ${error}` });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -318,4 +355,5 @@ module.exports = {
   forgotPassword,
   getAllUser,
   getUserById,
+  googleLogin
 };
