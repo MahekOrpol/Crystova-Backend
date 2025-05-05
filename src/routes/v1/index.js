@@ -27,7 +27,7 @@ router.use('/register', registerRoutes);
 router.use('/review', reviewRoutes);
 router.use('/payment', paymentRoutes);
 router.use('/priceFilter', priceFilterRoutes);
-router.use('/products', productsRoutes);
+router.use('/product', productsRoutes);
 router.use('/order', orderRoutes);
 router.use('/orderDetails', orderDetailsRoutes);
 router.use('/notification', notificationRoutes);
