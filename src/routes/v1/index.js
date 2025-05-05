@@ -20,6 +20,7 @@ const adminRoutes = require('./admin.route');
 const assignmentsRoutes = require('./assignments.route');
 
 // Use all routes
+
 router.use('/auth', authRoutes);
 router.use('/user', userRoutes);
 router.use('/wishlist', wishlistRoutes);
