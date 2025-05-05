@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { toJSON} = require("./plugins");
+const { toJSON } = require("./plugins");
 
 const reviewSchema = mongoose.Schema(
   {
@@ -9,11 +9,16 @@ const reviewSchema = mongoose.Schema(
       trim: true,
     },
     image: {
-      type: String,
+      type: [String],
     },
     rating: {
-        type: String,
-      },
+      type: String,
+    },
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Products", 
+      required: true,
+    },
   },
   {
     timestamps: true,

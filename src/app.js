@@ -28,10 +28,10 @@ if (config.env !== 'test') {
 app.use(helmet());
 
 // parse json request body
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '99MB' }));
 
 // parse urlencoded request body
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.urlencoded({ limit: '99MB', extended: true }));
 
 // sanitize request data
 app.use(xss());
