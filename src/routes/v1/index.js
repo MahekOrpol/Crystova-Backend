@@ -25,6 +25,8 @@ const contactRoutes = require('./contactUs.route')
 const router = express.Router();
 const priceFilterRoute=require('./priceFilter.route');
 const customJewelsRoute = require("./customJewels.route");
+const reviewsRoute = require("./review.route");
+
 const defaultRoutes = [
   {
     path: "/auth",
@@ -125,6 +127,10 @@ const defaultRoutes = [
   {
     path:'/custom-jewels',
     route: customJewelsRoute,
+  },
+  {
+    path:'/review',
+    route: reviewsRoute,
   }
 ];
 
