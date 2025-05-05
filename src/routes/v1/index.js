@@ -21,7 +21,7 @@ const assignmentsRoutes = require('./assignments.route');
 
 // Use all routes
 router.use('/auth', authRoutes);
-router.use('/user', userRoutes);
+router.use('/users', userRoutes);
 router.use('/wishlist', wishlistRoutes);
 router.use('/register', registerRoutes);
 router.use('/review', reviewRoutes);
@@ -29,10 +29,10 @@ router.use('/payment', paymentRoutes);
 router.use('/priceFilter', priceFilterRoutes);
 router.use('/product', productsRoutes);
 router.use('/order', orderRoutes);
-router.use('/orderDetails', orderDetailsRoutes);
+router.use('/order-details', orderDetailsRoutes);
 router.use('/notification', notificationRoutes);
-router.use('/contactUs', contactUsRoutes);
-router.use('/customJewels', customJewelsRoutes);
+router.use('/contact-us', contactUsRoutes);
+router.use('/custom-jewels', customJewelsRoutes);
 router.use('/category', categoryRoutes);
 router.use('/admin', adminRoutes);
 router.use('/assignments', assignmentsRoutes);
