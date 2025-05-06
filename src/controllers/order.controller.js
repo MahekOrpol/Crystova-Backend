@@ -317,8 +317,8 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
     .text("All Orders Summary", { align: "center" })
     .moveDown(2);
 
-  const startX = 50;
-  const rowHeight = 20;
+  const startX = 20;
+  const rowHeight = 30;
   const colWidths = {
     orderId: 50,
     name: 90,
@@ -326,15 +326,16 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
     price: 50,
     user: 60,
     email: 130,
-    totalPrice: 60,
+    totalPrice: 50,
     status: 50,
-    paymentStatus: 90,
+    paymentStatus: 50,
   };
 
   let currentY = doc.y;
 
   // Draw table header ONCE
 
+  
   doc
     .font("Helvetica-Bold")
     .fontSize(10)
@@ -388,7 +389,7 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
         colWidths.user +
         colWidths.email,
       currentY,
-      { width: colWidths.totalPrice, lineBreak: false }
+      { width: colWidths.totalPrice, lineBreak: true }
     )
     .text(
       "Status",
@@ -404,7 +405,7 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
       { width: colWidths.status, lineBreak: false }
     )
     .text(
-      "Payment",
+      "Payment Statue",
       startX +
         colWidths.orderId +
         colWidths.name +
@@ -415,10 +416,14 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
         colWidths.totalPrice +
         colWidths.status,
       currentY,
-      { width: colWidths.paymentStatus, lineBreak: false }
+      { width: colWidths.paymentStatus,lineBreak: true}
     );
 
   currentY += rowHeight;
+  doc
+  .moveTo(startX, currentY - 5)
+  .lineTo(595, currentY - 5)
+  .stroke();
 
   // Table body
   doc.font("Helvetica").fontSize(10).fillColor("black");
@@ -490,7 +495,7 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
               colWidths.user +
               colWidths.email,
             currentY,
-            { width: colWidths.totalPrice, lineBreak: false }
+            { width: colWidths.totalPrice, lineBreak: true }
           )
           .text(
             "Status",
@@ -506,7 +511,7 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
             { width: colWidths.status, lineBreak: false }
           )
           .text(
-            "Payment",
+            "Payment Status",
             startX +
               colWidths.orderId +
               colWidths.name +
@@ -517,7 +522,7 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
               colWidths.totalPrice +
               colWidths.status,
             currentY,
-            { width: colWidths.paymentStatus, lineBreak: false }
+            { width: colWidths.paymentStatus, lineBreak: true }
           );
 
         currentY += rowHeight;
@@ -527,6 +532,11 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
       const name = detail.empty ? "-" : detail.productId?.name || "-";
       const qty = detail.empty ? "0" : detail.quantity.toString();
       const price = detail.empty ? "$0" : `$${detail.productId?.price || 0}`;
+
+      doc
+      .moveTo(startX, currentY - 5)
+      .lineTo(595, currentY - 5)
+      .stroke();
 
       doc
         .text(order.orderId, startX, currentY, {
@@ -613,6 +623,10 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
 
     currentY += 10; // spacing between orders
   }
+  doc
+  .moveTo(startX, currentY - 5)
+  .lineTo(595, currentY - 5)
+  .stroke();
 
   doc.end();
 
