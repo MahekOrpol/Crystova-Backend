@@ -86,6 +86,7 @@ if (config.env === 'production') {
   app.use('/v1/auth', authLimiter);
 }
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // v1 api routes
 app.use('/api/v1', routes);
 

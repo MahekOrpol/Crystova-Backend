@@ -286,60 +286,121 @@ const printOrder = catchAsync(async (req, res) => {
   });
 });
 
-const generateOrderPDF = catchAsync(async (req, res) => {
-  const { orderId } = req.params;
-
-  // Fetch the order and order details
-  const order = await Order.findOne({ orderId: orderId })
-    .populate("userId")
-    .lean();
-
-  if (!order) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
+const downloadAllOrdersPDF = catchAsync(async (req, res) => {
+  const orders = await Order.find().populate("userId").lean();
+  if (!orders.length) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No orders found");
   }
 
-  const orderDetails = await OrderDetails.find({ orderId })
-    .populate("productId")
-    .lean();
-
-  // Create a PDF document
-  const doc = new PDFDocument();
-
-  // Set the output file path
-  const outputPath = path.join(__dirname, `../uploads/order_${orderId}.pdf`);
-
+  const doc = new PDFDocument({ margin: 40 });
+  const outputPath = path.join(__dirname, `../uploads/all_orders.pdf`);
   doc.pipe(fs.createWriteStream(outputPath));
 
-  // Add content to the PDF
-  doc.fontSize(16).text(`Order Summary`, { align: "center" }).moveDown(2);
+  doc.fontSize(20).font('Helvetica-Bold').text('All Orders Summary', { align: 'center' }).moveDown(1.5);
 
-  doc.fontSize(12).text(`Order ID: ${orderId}`);
-  doc.text(`User: ${order.userId.firstName} ${order.userId.lastName}`);
-  doc.text(`Email: ${order.userId.email}`);
-  doc.text(`Total Price: $${order.totalPrice}`);
-  doc.text(`Status: ${order.status}`);
-  doc.text(`Payment Status: ${order.paymentStatus}`);
+  for (const order of orders) {
+    const orderDetails = await OrderDetails.find({ orderId: order.orderId })
+      .populate("productId")
+      .lean();
 
-  doc.moveDown();
+    // Boxed section background (optional)
+    const startY = doc.y;
+    doc.rect(35, startY, 540, 20 + orderDetails.length * 20 + 80).fillOpacity(0.05).fillAndStroke("#eeeeee", "#cccccc");
+    doc.fillOpacity(1).strokeColor("#000");
 
-  doc.text("Order Details:", { underline: true }).moveDown();
-
-  orderDetails.forEach((detail) => {
-    doc.text(`- Product: ${detail.productId.name}`);
-    doc.text(`  Quantity: ${detail.quantity}`);
-    doc.text(`  Price: $${detail.productId.price}`);
     doc.moveDown();
-  });
+
+    // Order Header
+    doc.fontSize(12).font('Helvetica-Bold').fillColor("#000")
+      .text(`Order ID: ${order.orderId}`);
+    doc.font('Helvetica').text(`User: ${order.userId?.firstName || "N/A"} ${order.userId?.lastName || ""}`);
+    doc.text(`Email: ${order.userId?.email || "N/A"}`);
+    doc.text(`Total Price: $${order.totalPrice}`);
+    doc.text(`Status: ${order.status}`);
+    doc.text(`Payment Status: ${order.paymentStatus}`);
+    doc.moveDown();
+
+    // Product Table Header
+    doc.fontSize(11).font('Helvetica-Bold').text("Products:").moveDown(0.5);
+
+    // Column headers
+    doc.fontSize(10).font('Helvetica-Bold');
+    doc.text('Product Name', 40, doc.y, { width: 200 });
+    doc.text('Quantity', 260, doc.y, { width: 100 });
+    doc.text('Price', 400, doc.y, { width: 100 });
+    doc.moveDown(0.3);
+
+    doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown(0.5);
+
+    // Product Rows
+    doc.font('Helvetica').fontSize(10);
+    for (const detail of orderDetails) {
+      doc.text(detail.productId?.name || "Unknown", 40, doc.y, { width: 200 });
+      doc.text(detail.quantity, 260, doc.y, { width: 100 });
+      doc.text(`$${detail.productId?.price || 0}`, 400, doc.y, { width: 100 });
+      doc.moveDown();
+    }
+
+    // Add space between orders
+    doc.moveDown(2);
+
+    // Manual page break if nearing bottom
+    if (doc.y > 700) doc.addPage();
+  }
 
   doc.end();
 
-  // After PDF is created, send it as a response
   doc.on("finish", () => {
     res.status(httpStatus.OK).json({
       status: true,
-      message: "PDF generated successfully",
+      message: "All orders PDF generated successfully",
       data: {
-        pdfUrl: `/uploads/order_${orderId}.pdf`,
+        pdfUrl: `/uploads/all_orders.pdf`,
+      },
+    });
+  });
+});
+
+const downloadProductOrdersPDF = catchAsync(async (req, res) => {
+  const { productId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid product ID");
+  }
+
+  const orderDetails = await OrderDetails.find({ productId }).populate("productId").lean();
+  if (!orderDetails.length) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No orders found for this product");
+  }
+
+  const doc = new PDFDocument();
+  const outputPath = path.join(__dirname, `../uploads/product_orders_${productId}.pdf`);
+  doc.pipe(fs.createWriteStream(outputPath));
+
+  doc.fontSize(16).text(`Orders Containing Product: ${orderDetails[0].productId.name}`, { align: "center" }).moveDown();
+
+  for (const detail of orderDetails) {
+    const order = await Order.findOne({ orderId: detail.orderId }).populate("userId").lean();
+    if (order) {
+      doc.fontSize(12).text(`Order ID: ${order.orderId}`);
+      doc.text(`User: ${order.userId.firstName} ${order.userId.lastName}`);
+      doc.text(`Email: ${order.userId.email}`);
+      doc.text(`Qty Ordered: ${detail.quantity}`);
+      doc.text(`Status: ${order.status}`);
+      doc.text(`Total Price: $${order.totalPrice}`);
+      doc.moveDown();
+    }
+  }
+
+  doc.end();
+
+  doc.on("finish", () => {
+    res.status(httpStatus.OK).json({
+      status: true,
+      message: "Product orders PDF generated",
+      data: {
+        pdfUrl: `/uploads/product_orders_${productId}.pdf`,
       },
     });
   });
@@ -353,5 +414,6 @@ module.exports = {
   getUserOrders,
   getSavedAddress,
   printOrder,
-  generateOrderPDF,
+  downloadAllOrdersPDF,
+  downloadProductOrdersPDF
 };

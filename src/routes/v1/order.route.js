@@ -16,7 +16,8 @@ router.get("/address/:userId", getSavedAddress);
 
 router.get("/print/:orderId", printOrder);
 
-router.get("/:orderId/generate-pdf", generateOrderPDF);
+router.get("/download-all-orders", orderController.downloadAllOrdersPDF);
+router.get("/download-product-orders/:productId", orderController.downloadProductOrdersPDF);
 
 
 module.exports = router;
