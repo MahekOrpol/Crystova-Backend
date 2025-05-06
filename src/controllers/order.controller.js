@@ -301,6 +301,7 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
 
   const orderDetailsMap = {};
   allOrderDetails.forEach((detail) => {
+    console.log('detail :>> ', detail);
     const id = detail.orderId;
     if (!orderDetailsMap[id]) orderDetailsMap[id] = [];
     orderDetailsMap[id].push(detail);
@@ -334,7 +335,6 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
   let currentY = doc.y;
 
   // Draw table header ONCE
-
   
   doc
     .font("Helvetica-Bold")
