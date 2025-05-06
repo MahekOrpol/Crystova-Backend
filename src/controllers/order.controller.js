@@ -292,61 +292,326 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, "No orders found");
   }
 
-  const doc = new PDFDocument({ margin: 40 });
+  const orderIds = orders.map((order) => order.orderId);
+  const allOrderDetails = await OrderDetails.find({
+    orderId: { $in: orderIds },
+  })
+    .populate("productId")
+    .lean();
+
+  const orderDetailsMap = {};
+  allOrderDetails.forEach((detail) => {
+    const id = detail.orderId;
+    if (!orderDetailsMap[id]) orderDetailsMap[id] = [];
+    orderDetailsMap[id].push(detail);
+  });
+
+  const doc = new PDFDocument({ margin: 50 });
+
   const outputPath = path.join(__dirname, `../uploads/all_orders.pdf`);
   doc.pipe(fs.createWriteStream(outputPath));
 
-  doc.fontSize(20).font('Helvetica-Bold').text('All Orders Summary', { align: 'center' }).moveDown(1.5);
+  doc
+    .fontSize(18)
+    .font("Helvetica-Bold")
+    .text("All Orders Summary", { align: "center" })
+    .moveDown(2);
+
+  const startX = 50;
+  const rowHeight = 20;
+  const colWidths = {
+    orderId: 50,
+    name: 90,
+    quantity: 50,
+    price: 50,
+    user: 60,
+    email: 130,
+    totalPrice: 60,
+    status: 50,
+    paymentStatus: 90,
+  };
+
+  let currentY = doc.y;
+
+  // Draw table header ONCE
+
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(10)
+    .fillColor("black")
+    .text("Order ID", startX, currentY, {
+      width: colWidths.orderId,
+      lineBreak: false,
+    })
+    .text("Product Name", startX + colWidths.orderId, currentY, {
+      width: colWidths.name,
+      lineBreak: false,
+    })
+    .text("Quantity", startX + colWidths.orderId + colWidths.name, currentY, {
+      width: colWidths.quantity,
+      lineBreak: false,
+    })
+    .text(
+      "Price",
+      startX + colWidths.orderId + colWidths.name + colWidths.quantity,
+      currentY,
+      { width: colWidths.price, lineBreak: false }
+    )
+    .text(
+      "User",
+      startX +
+        colWidths.orderId +
+        colWidths.name +
+        colWidths.quantity +
+        colWidths.price,
+      currentY,
+      { width: colWidths.user, lineBreak: false }
+    )
+    .text(
+      "Email",
+      startX +
+        colWidths.orderId +
+        colWidths.name +
+        colWidths.quantity +
+        colWidths.price +
+        colWidths.user,
+      currentY,
+      { width: colWidths.email, lineBreak: false }
+    )
+    .text(
+      "Total Price",
+      startX +
+        colWidths.orderId +
+        colWidths.name +
+        colWidths.quantity +
+        colWidths.price +
+        colWidths.user +
+        colWidths.email,
+      currentY,
+      { width: colWidths.totalPrice, lineBreak: false }
+    )
+    .text(
+      "Status",
+      startX +
+        colWidths.orderId +
+        colWidths.name +
+        colWidths.quantity +
+        colWidths.price +
+        colWidths.user +
+        colWidths.email +
+        colWidths.totalPrice,
+      currentY,
+      { width: colWidths.status, lineBreak: false }
+    )
+    .text(
+      "Payment",
+      startX +
+        colWidths.orderId +
+        colWidths.name +
+        colWidths.quantity +
+        colWidths.price +
+        colWidths.user +
+        colWidths.email +
+        colWidths.totalPrice +
+        colWidths.status,
+      currentY,
+      { width: colWidths.paymentStatus, lineBreak: false }
+    );
+
+  currentY += rowHeight;
+
+  // Table body
+  doc.font("Helvetica").fontSize(10).fillColor("black");
 
   for (const order of orders) {
-    const orderDetails = await OrderDetails.find({ orderId: order.orderId })
-      .populate("productId")
-      .lean();
+    const orderDetailList = orderDetailsMap[order.orderId] || [];
 
-    // Boxed section background (optional)
-    const startY = doc.y;
-    doc.rect(35, startY, 540, 20 + orderDetails.length * 20 + 80).fillOpacity(0.05).fillAndStroke("#eeeeee", "#cccccc");
-    doc.fillOpacity(1).strokeColor("#000");
+    const rows =
+      orderDetailList.length > 0 ? orderDetailList : [{ empty: true }];
 
-    doc.moveDown();
+    for (const detail of rows) {
+      if (currentY > 750) {
+        doc.addPage();
+        currentY = 50;
 
-    // Order Header
-    doc.fontSize(12).font('Helvetica-Bold').fillColor("#000")
-      .text(`Order ID: ${order.orderId}`);
-    doc.font('Helvetica').text(`User: ${order.userId?.firstName || "N/A"} ${order.userId?.lastName || ""}`);
-    doc.text(`Email: ${order.userId?.email || "N/A"}`);
-    doc.text(`Total Price: $${order.totalPrice}`);
-    doc.text(`Status: ${order.status}`);
-    doc.text(`Payment Status: ${order.paymentStatus}`);
-    doc.moveDown();
+        // Redraw header on new page
+        doc
+          .font("Helvetica-Bold")
+          .fontSize(10)
+          .fillColor("black")
+          .text("Order ID", startX, currentY, {
+            width: colWidths.orderId,
+            lineBreak: false,
+          })
+          .text("Product Name", startX + colWidths.orderId, currentY, {
+            width: colWidths.name,
+            lineBreak: false,
+          })
+          .text(
+            "Quantity",
+            startX + colWidths.orderId + colWidths.name,
+            currentY,
+            { width: colWidths.quantity, lineBreak: false }
+          )
+          .text(
+            "Price",
+            startX + colWidths.orderId + colWidths.name + colWidths.quantity,
+            currentY,
+            { width: colWidths.price, lineBreak: false }
+          )
+          .text(
+            "User",
+            startX +
+              colWidths.orderId +
+              colWidths.name +
+              colWidths.quantity +
+              colWidths.price,
+            currentY,
+            { width: colWidths.user, lineBreak: false }
+          )
+          .text(
+            "Email",
+            startX +
+              colWidths.orderId +
+              colWidths.name +
+              colWidths.quantity +
+              colWidths.price +
+              colWidths.user,
+            currentY,
+            { width: colWidths.email, lineBreak: false }
+          )
+          .text(
+            "Total Price",
+            startX +
+              colWidths.orderId +
+              colWidths.name +
+              colWidths.quantity +
+              colWidths.price +
+              colWidths.user +
+              colWidths.email,
+            currentY,
+            { width: colWidths.totalPrice, lineBreak: false }
+          )
+          .text(
+            "Status",
+            startX +
+              colWidths.orderId +
+              colWidths.name +
+              colWidths.quantity +
+              colWidths.price +
+              colWidths.user +
+              colWidths.email +
+              colWidths.totalPrice,
+            currentY,
+            { width: colWidths.status, lineBreak: false }
+          )
+          .text(
+            "Payment",
+            startX +
+              colWidths.orderId +
+              colWidths.name +
+              colWidths.quantity +
+              colWidths.price +
+              colWidths.user +
+              colWidths.email +
+              colWidths.totalPrice +
+              colWidths.status,
+            currentY,
+            { width: colWidths.paymentStatus, lineBreak: false }
+          );
 
-    // Product Table Header
-    doc.fontSize(11).font('Helvetica-Bold').text("Products:").moveDown(0.5);
+        currentY += rowHeight;
+        doc.font("Helvetica").fontSize(10).fillColor("black");
+      }
 
-    // Column headers
-    doc.fontSize(10).font('Helvetica-Bold');
-    doc.text('Product Name', 40, doc.y, { width: 200 });
-    doc.text('Quantity', 260, doc.y, { width: 100 });
-    doc.text('Price', 400, doc.y, { width: 100 });
-    doc.moveDown(0.3);
+      const name = detail.empty ? "-" : detail.productId?.name || "-";
+      const qty = detail.empty ? "0" : detail.quantity.toString();
+      const price = detail.empty ? "$0" : `$${detail.productId?.price || 0}`;
 
-    doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
-    doc.moveDown(0.5);
+      doc
+        .text(order.orderId, startX, currentY, {
+          width: colWidths.orderId,
+          lineBreak: false,
+        })
+        .text(name, startX + colWidths.orderId, currentY, {
+          width: colWidths.name,
+          lineBreak: false,
+        })
+        .text(qty, startX + colWidths.orderId + colWidths.name, currentY, {
+          width: colWidths.quantity,
+          lineBreak: false,
+        })
+        .text(
+          price,
+          startX + colWidths.orderId + colWidths.name + colWidths.quantity,
+          currentY,
+          { width: colWidths.price, lineBreak: false }
+        )
+        .text(
+          order.userId?.name || "-",
+          startX +
+            colWidths.orderId +
+            colWidths.name +
+            colWidths.quantity +
+            colWidths.price,
+          currentY,
+          { width: colWidths.user, lineBreak: false }
+        )
+        .text(
+          order.userId?.email || "-",
+          startX +
+            colWidths.orderId +
+            colWidths.name +
+            colWidths.quantity +
+            colWidths.price +
+            colWidths.user,
+          currentY,
+          { width: colWidths.email, lineBreak: false }
+        )
+        .text(
+          `$${order.totalPrice}`,
+          startX +
+            colWidths.orderId +
+            colWidths.name +
+            colWidths.quantity +
+            colWidths.price +
+            colWidths.user +
+            colWidths.email,
+          currentY,
+          { width: colWidths.totalPrice, lineBreak: false }
+        )
+        .text(
+          order.status,
+          startX +
+            colWidths.orderId +
+            colWidths.name +
+            colWidths.quantity +
+            colWidths.price +
+            colWidths.user +
+            colWidths.email +
+            colWidths.totalPrice,
+          currentY,
+          { width: colWidths.status, lineBreak: false }
+        )
+        .text(
+          order.paymentStatus,
+          startX +
+            colWidths.orderId +
+            colWidths.name +
+            colWidths.quantity +
+            colWidths.price +
+            colWidths.user +
+            colWidths.email +
+            colWidths.totalPrice +
+            colWidths.status,
+          currentY,
+          { width: colWidths.paymentStatus, lineBreak: false }
+        );
 
-    // Product Rows
-    doc.font('Helvetica').fontSize(10);
-    for (const detail of orderDetails) {
-      doc.text(detail.productId?.name || "Unknown", 40, doc.y, { width: 200 });
-      doc.text(detail.quantity, 260, doc.y, { width: 100 });
-      doc.text(`$${detail.productId?.price || 0}`, 400, doc.y, { width: 100 });
-      doc.moveDown();
+      currentY += rowHeight;
     }
 
-    // Add space between orders
-    doc.moveDown(2);
-
-    // Manual page break if nearing bottom
-    if (doc.y > 700) doc.addPage();
+    currentY += 10; // spacing between orders
   }
 
   doc.end();
@@ -355,9 +620,7 @@ const downloadAllOrdersPDF = catchAsync(async (req, res) => {
     res.status(httpStatus.OK).json({
       status: true,
       message: "All orders PDF generated successfully",
-      data: {
-        pdfUrl: `/uploads/all_orders.pdf`,
-      },
+      data: { pdfUrl: `/uploads/all_orders.pdf` },
     });
   });
 });
@@ -369,19 +632,34 @@ const downloadProductOrdersPDF = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid product ID");
   }
 
-  const orderDetails = await OrderDetails.find({ productId }).populate("productId").lean();
+  const orderDetails = await OrderDetails.find({ productId })
+    .populate("productId")
+    .lean();
   if (!orderDetails.length) {
-    throw new ApiError(httpStatus.NOT_FOUND, "No orders found for this product");
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "No orders found for this product"
+    );
   }
 
   const doc = new PDFDocument();
-  const outputPath = path.join(__dirname, `../uploads/product_orders_${productId}.pdf`);
+  const outputPath = path.join(
+    __dirname,
+    `../uploads/product_orders_${productId}.pdf`
+  );
   doc.pipe(fs.createWriteStream(outputPath));
 
-  doc.fontSize(16).text(`Orders Containing Product: ${orderDetails[0].productId.name}`, { align: "center" }).moveDown();
+  doc
+    .fontSize(16)
+    .text(`Orders Containing Product: ${orderDetails[0].productId.name}`, {
+      align: "center",
+    })
+    .moveDown();
 
   for (const detail of orderDetails) {
-    const order = await Order.findOne({ orderId: detail.orderId }).populate("userId").lean();
+    const order = await Order.findOne({ orderId: detail.orderId })
+      .populate("userId")
+      .lean();
     if (order) {
       doc.fontSize(12).text(`Order ID: ${order.orderId}`);
       doc.text(`User: ${order.userId.firstName} ${order.userId.lastName}`);
@@ -415,5 +693,5 @@ module.exports = {
   getSavedAddress,
   printOrder,
   downloadAllOrdersPDF,
-  downloadProductOrdersPDF
+  downloadProductOrdersPDF,
 };

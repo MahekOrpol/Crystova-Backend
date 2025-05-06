@@ -10,12 +10,13 @@ const createReviewPro = {
          image: Joi.array().items(Joi.string()).optional(),
       msg: Joi.string().required(),
       productId: Joi.string().required(),
+      userId: Joi.string().required(),
       rating: Joi.number().min(1).max(5).required(),
     }),
   },
   handler: async (req, res) => {
     try {
-      const { productId, msg, rating } = req.body;
+      const { productId, msg, rating,userId } = req.body;
 
       const product = await Products.findById(productId);
       if (!product) {
@@ -39,7 +40,7 @@ const createReviewPro = {
         rating,
         productId,
         image: imagePath,
-
+        userId,
       };
 
       const review = await new Review(reviewData).save();
@@ -77,7 +78,10 @@ const getAllReviews = {
   handler: async (req, res) => {
     try {
       // Find all reviews in the database
-      const reviews = await Review.find();
+      const reviews = await Review.find().populate({
+        path: "userId",
+        select: "name email", // adjust fields as needed
+      });
 
       if (!reviews || reviews.length === 0) {
         throw new ApiError(httpStatus.NOT_FOUND, "No reviews found");
