@@ -65,7 +65,12 @@ const getReviewsByProductId = {
         throw new ApiError(httpStatus.NOT_FOUND, "No reviews found for this product");
       }
 
-      return res.status(httpStatus.OK).send(reviews);
+      // Get the review with the highest rating
+      const topReview = reviews.reduce((max, review) => {
+        return review.rating > max.rating ? review : max;
+      }, reviews[0]);
+
+      return res.status(httpStatus.OK).send(topReview); // only top-rated review
     } catch (error) {
       return res
         .status(httpStatus.INTERNAL_SERVER_ERROR)
@@ -73,6 +78,7 @@ const getReviewsByProductId = {
     }
   },
 };
+
 
 const getAllReviews = {
   handler: async (req, res) => {
