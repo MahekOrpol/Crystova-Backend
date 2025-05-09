@@ -19,23 +19,23 @@ const path = require('path');
 
 const app = express();
 
-app.get('/sitemap.xml', async (req, res) => {
-  const links = [
-    { url: '/', changefreq: 'daily', priority: 1.0 },
-    { url: '/products', changefreq: 'weekly', priority: 0.8 },
-    { url: '/about-us', changefreq: 'monthly', priority: 0.5 },
-    // You can dynamically generate these based on DB products/blogs
-  ];
+// app.get('/sitemap.xml', async (req, res) => {
+//   const links = [
+//     { url: '/', changefreq: 'daily', priority: 1.0 },
+//     { url: '/products', changefreq: 'weekly', priority: 0.8 },
+//     { url: '/about-us', changefreq: 'monthly', priority: 0.5 },
+//     // You can dynamically generate these based on DB products/blogs
+//   ];
 
-  const stream = new SitemapStream({ hostname: 'https://crystovajewels.com' });
-  res.writeHead(200, { 'Content-Type': 'application/xml' });
+//   const stream = new SitemapStream({ hostname: 'https://crystovajewels.com' });
+//   res.writeHead(200, { 'Content-Type': 'application/xml' });
 
-  const xml = await streamToPromise(Readable.from(links).pipe(stream)).then((data) =>
-    data.toString()
-  );
+//   const xml = await streamToPromise(Readable.from(links).pipe(stream)).then((data) =>
+//     data.toString()
+//   );
 
-  res.end(xml);
-});
+//   res.end(xml);
+// });
 
 
 if (config.env !== 'test') {
