@@ -182,7 +182,8 @@ const createProduct = {
 const getAllProducts = {
   validation: {
     body: Joi.object().keys({
-      categoryName: Joi.string(),
+      // categoryName: Joi.string(),
+      categoryName: Joi.alternatives().try(Joi.string(), Joi.array().items(Joi.string())),
       productName: Joi.string(),
       stock: Joi.string(),
       gender: Joi.string(),
@@ -196,8 +197,22 @@ const getAllProducts = {
     // return res.status(httpStatus.OK).send(products);
     const filter = {};
 
-    if (req.query?.categoryName) {
-      filter.categoryName = req.query.categoryName; // Filter by category name
+    // if (req.query?.categoryName) {
+    //   filter.categoryName = req.query.categoryName; // Filter by category name
+    // }
+    const { categoryName } = req.query;
+    if (categoryName) {
+      if (Array.isArray(categoryName)) {
+        filter.categoryName = { $in: categoryName };
+      } else if (typeof categoryName === 'string') {
+        // Support comma-separated list (e.g., "shirts,dresses")
+        const categories = categoryName.split(',').map((c) => c.trim());
+        if (categories.length > 1) {
+          filter.categoryName = { $in: categories };
+        } else {
+          filter.categoryName = categoryName;
+        }
+      }
     }
 
     if (req.query?.productName) {
