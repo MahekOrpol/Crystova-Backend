@@ -6,7 +6,6 @@
   "main": "src/index.js",
   "repository": "https://github.com/hagopj13/node-express-boilerplate.git",
   "author": "Hagop Jamkojian <hagopj13@gmail.com>",
-  "license": "MIT",
   "engines": {
     "node": ">=12.0.0"
   },
@@ -78,6 +77,7 @@
     "socket.io": "^4.7.4",
     "swagger-jsdoc": "^6.0.8",
     "swagger-ui-express": "^4.1.6",
+    "twilio": "^5.6.1",
     "validator": "^13.0.0",
     "winston": "^3.2.1",
     "xss-clean": "^0.1.1",
