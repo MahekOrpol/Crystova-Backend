@@ -15,3 +15,6 @@ module.exports.ProductVariations=require('./productVariation.model')
 module.exports.CustomJewels=require('./customJewels.model')
 module.exports.PriceFilter=require('./priceFilter.model')
 module.exports.review=require('./review.model')
+module.exports.blogs=require('./blogs.model')
+module.exports.AboutUs = require('./aboutUs.model');
+

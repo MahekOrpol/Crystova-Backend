@@ -18,7 +18,9 @@ const customJewelsRoutes = require('./customJewels.route');
 const categoryRoutes = require('./category.route');
 const adminRoutes = require('./admin.route');
 const assignmentsRoutes = require('./assignments.route');
-
+const whatsappRoutes = require('./whatsapp.route')
+const blogsRoute = require('./blogs.route')
+const aboutUsRoute = require('./aboutUs.route')
 // Use all routes
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
@@ -36,5 +38,8 @@ router.use('/custom-jewels', customJewelsRoutes);
 router.use('/category', categoryRoutes);
 router.use('/admin', adminRoutes);
 router.use('/assignments', assignmentsRoutes);
+router.use('/whatsapp/custome', whatsappRoutes);
+router.use('/blog', blogsRoute);
+router.use('/about-us', aboutUsRoute);
 
 module.exports = router; 
