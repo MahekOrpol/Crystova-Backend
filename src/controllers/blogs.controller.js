@@ -7,6 +7,7 @@ const createBlogs = {
     validation: {
         body: Joi.object().keys({
             headline: Joi.string().required(),
+            sentence: Joi.string().required(),
             description: Joi.string().required(),
             articleBody: Joi.string().required(),
             authorName: Joi.string().required(),
@@ -15,7 +16,7 @@ const createBlogs = {
         }),
     },
     handler: async (req, res) => {
-        const { headline, description, articleBody, authorName, trend } = req.body;
+        const { headline, description, articleBody, authorName, trend ,sentence} = req.body;
 
         // Check if 'trend' is coming in as an array
         if (Array.isArray(trend)) {
@@ -45,6 +46,7 @@ const createBlogs = {
         // Create a new blog instance
         const blogs = new Blogs({
             headline,
+            sentence,
             description,
             articleBody,
             authorName,
@@ -62,6 +64,7 @@ const updateBlogs = {
     validation: {
         body: Joi.object().keys({
             headline: Joi.string(),
+            sentence: Joi.string(),
             description: Joi.string(),
             articleBody: Joi.string(),
             authorName: Joi.string(),
