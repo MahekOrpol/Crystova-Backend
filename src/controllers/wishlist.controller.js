@@ -85,11 +85,26 @@ const getAllWishlists = async (req, res) => {
   }
 };
 
+const deleteAllWishlist = catchAsync(async (req, res) => {
+  const { userId } = req.params;
+
+  const result = await Wishlist.deleteMany({ userId });
+
+  if (result.deletedCount === 0) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No wishlist items found for this user");
+  }
+
+  return res.status(httpStatus.OK).json({
+    message: "All wishlist items removed for user",
+    deletedCount: result.deletedCount,
+  });
+});
 
 
 module.exports = {
   getAllWishlists,
   createWishlist,
   deleteeWishlist,
-  getWishlist
+  getWishlist,
+  deleteAllWishlist
 };
