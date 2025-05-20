@@ -11,52 +11,95 @@ const createBlogs = {
             description: Joi.string().required(),
             articleBody: Joi.string().required(),
             authorName: Joi.string().required(),
-            imges: Joi.string().optional(),
-            trend: Joi.array().items(Joi.string()).required(),  // Ensure this is an array
+            imges: Joi.string().optional().allow(null),
+            trend: Joi.alternatives().try(
+                Joi.array().items(Joi.string()),
+                Joi.string()
+            ).required(),
+            tag: Joi.alternatives().try(
+                Joi.array().items(Joi.string()),
+                Joi.string()
+            ).required()
         }),
     },
     handler: async (req, res) => {
-        const { headline, description, articleBody, authorName, trend ,sentence} = req.body;
+        try {
+            const {
+                headline,
+                sentence,
+                description,
+                articleBody,
+                authorName,
+                trend,
+                tag
+            } = req.body;
 
-        // Check if 'trend' is coming in as an array
-        if (Array.isArray(trend)) {
-            // It's already an array, so nothing more needs to be done.
-        } else if (typeof trend === 'string') {
+            // Process arrays (trend and tag)
+            const processArrayField = (field) => {
+                if (Array.isArray(field)) return field;
+                try {
+                    return JSON.parse(field);
+                } catch {
+                    throw new Error(`Invalid format for ${field}. Must be array or JSON string`);
+                }
+            };
+
+            let processedTrend, processedTag;
             try {
-                // If trend is a single string, try parsing it
-                req.body.trend = JSON.parse(trend);
-            } catch (e) {
+                processedTrend = processArrayField(trend);
+                processedTag = processArrayField(tag);
+            } catch (error) {
                 return res.status(httpStatus.BAD_REQUEST).send({
                     code: 400,
-                    message: '"trend" must be a valid JSON array string',
+                    message: error.message
                 });
             }
-        }
 
-        // If `trend` is still not an array, return an error
-        if (!Array.isArray(req.body.trend)) {
-            return res.status(httpStatus.BAD_REQUEST).send({
-                code: 400,
-                message: '"trend" must be an array',
+            // Handle file upload
+            // let imagePath = null;
+
+            if (req.file) {
+                console.log('Uploaded file:', req.file); // Debug log
+                try {
+                    const uploadedFile = await saveFile(req.file);
+                    console.log('req.file :>> ', req.file);
+                    imagePath = uploadedFile?.upload_path;
+                } catch (fileError) {
+                    console.error('File upload error:', fileError);
+                    // Continue without failing the whole request
+                }
+            } else {
+                console.log('No file was uploaded'); // Debug log
+            }
+
+            // Create blog
+            const blog = new Blogs({
+                headline,
+                sentence,
+                description,
+                articleBody,
+                authorName,
+                trend: processedTrend,
+                tag: processedTag,
+                imges: imagePath
+            });
+
+            await blog.save();
+
+            return res.status(httpStatus.CREATED).send({
+                success: true,
+                data: blog,
+                message: 'Blog created successfully'
+            });
+
+        } catch (error) {
+            console.error('Error creating blog:', error);
+            return res.status(httpStatus.INTERNAL_SERVER_ERROR).send({
+                code: 500,
+                message: 'Internal server error',
+                error: error.message
             });
         }
-
-        let imges = req.files.imges ? await saveFile(req.files.imges) : null;
-
-        // Create a new blog instance
-        const blogs = new Blogs({
-            headline,
-            sentence,
-            description,
-            articleBody,
-            authorName,
-            trend: req.body.trend,  // Use the passed array of trends
-            imges: imges?.upload_path,
-        });
-
-        await blogs.save();  // Save the blog instance
-
-        return res.status(httpStatus.CREATED).send(blogs);
     }
 };
 
@@ -70,9 +113,10 @@ const updateBlogs = {
             authorName: Joi.string(),
             imges: Joi.string(),
             trend: Joi.array().items(Joi.string()),  // Ensure this is an array
+            tag: Joi.array().items(Joi.string())
         }),
     },
-    handler: async (req, res) => {  
+    handler: async (req, res) => {
         const aboutUs = await Blogs.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true });
         return res.send(aboutUs);
     }
@@ -87,7 +131,7 @@ const deleteBlogs = {
 
 const getBlogs = {
     handler: async (req, res) => {
-      
+
         const aboutUs = await Blogs.find();
         return res.status(httpStatus.OK).send(aboutUs);
     }
