@@ -36,6 +36,10 @@ const blogsSchema = mongoose.Schema(
         trend: {
             type: [String],
             required: true,
+        },
+        tag: {
+            type: [String],
+            required: true,
         }
     },
     {
