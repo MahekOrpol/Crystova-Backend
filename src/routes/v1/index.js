@@ -38,7 +38,7 @@ router.use('/custom-jewels', customJewelsRoutes);
 router.use('/category', categoryRoutes);
 router.use('/admin', adminRoutes);
 router.use('/assignments', assignmentsRoutes);
-router.use('/whatsapp/custome', whatsappRoutes);
+// router.use('/whatsapp/custome', whatsappRoutes);
 router.use('/blog', blogsRoute);
 router.use('/about-us', aboutUsRoute);
 
