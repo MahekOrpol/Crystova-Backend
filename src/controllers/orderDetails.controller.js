@@ -140,10 +140,26 @@ const deleteOrderDetails = catchAsync(async (req, res) => {
   });
 });
 
+const deleteAlAddToCart = catchAsync(async (req, res) => {
+  const { userId } = req.params;
+
+  const result = await OrderDetails.deleteMany({ userId });
+
+  if (result.deletedCount === 0) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No Add to cart items found for this user");
+  }
+
+  return res.status(httpStatus.OK).json({
+    message: "All Add to cart items removed for user",
+    deletedCount: result.deletedCount,
+  });
+});
+
 module.exports = {
   createOrder,
   updateOrderStatus,
   getOrderById,
   getAllOrders,
   deleteOrderDetails,
+  deleteAlAddToCart
 };

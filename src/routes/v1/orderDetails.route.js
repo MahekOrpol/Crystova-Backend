@@ -15,5 +15,6 @@ router.get("/get/:userId", getOrderById);
 router.get("/get-all", getAllOrders);
 
 router.delete('/delete/:orderId',orderDetailsController.deleteOrderDetails)
+router.delete('/delete-all/:userId', orderDetailsController.deleteAlAddToCart);
 
 module.exports = router;
