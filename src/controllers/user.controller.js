@@ -31,7 +31,7 @@ const updateUserProfile = {
   handler: async (req, res) => {
     const { userId } = req.params;
     // const user = await Register.findOne({ user_id: userId }, req.body);
-    const user = await User.findOneAndUpdate(
+    const user = await Register.findOneAndUpdate(
       { _id: userId },
       req.body,
       { new: true }
@@ -64,7 +64,7 @@ const createUserProfile = {
     }),
   },
   handler: async (req, res) => {
-    const user = await User.create(req.body);
+    const user = await Register.create(req.body);
     return res.status(httpStatus.OK).json({
       status: true,
       message: "Profile Created successfully",
@@ -82,7 +82,7 @@ const getUserProfile = {
       });
     }
 
-    const userData = await User.findOne({ user_id: userId }).exec();
+    const userData = await Register.findOne({ user_id: userId }).exec();
     if (!userData) {
       return res.status(httpStatus.NOT_FOUND).send({
         message: "User not found",
